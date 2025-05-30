@@ -30,22 +30,22 @@ emcmake cmake -S zlib-src -B zlib-build \
 	-DZLIB_BUILD_STATIC=ON \
 	-DZLIB_BUILD_MINIZIP=OFF \
     -DCMAKE_C_FLAGS="-O2 -fexceptions -no-pthread"
-#emmake make -C zlib-build libz.a VERBOSE=1 -j16
 emmake make -C zlib-build install VERBOSE=1 -j16
 
-#[ -e ./libusb-src/configure ] || (
-#    cd ./libusb-src &&
-#    ./bootstrap.sh)
-#[ -e ./libusb-build/Makefile ] || (
-#    mkdir -p libusb-build &&
-#    cd ./libusb-build &&
-#    emconfigure ../libusb-src/configure \
-#        CFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
-#        CPPFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
-#        --host=wasm32-emscripten \
-#        --prefix=$(realpath $(pwd)/../prefix))
-#emmake make -C libusb-build install -j16
-#
+[ -e ./libusb-src/configure ] || (
+    cd ./libusb-src &&
+    ./bootstrap.sh)
+[ -e ./libusb-build/Makefile ] || (
+    mkdir -p libusb-build &&
+    cd ./libusb-build &&
+    emconfigure ../libusb-src/configure \
+        CFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
+        CPPFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
+        --host=wasm32-emscripten \
+		--disable-shared \
+        --prefix=$(realpath $(pwd)/../prefix))
+emmake make -C libusb-build install -j16
+
 #emcmake cmake -S libftdi-src -B libftdi-build \
 #    -DCMAKE_BUILD_TYPE=Release \
 #    -DCMAKE_INSTALL_PREFIX="$(pwd)/prefix" \
