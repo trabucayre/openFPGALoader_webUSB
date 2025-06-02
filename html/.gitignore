@@ -1,0 +1,4 @@
+openFPGALoader.js
+openFPGALoader.wasm
+*crt
+*.key
