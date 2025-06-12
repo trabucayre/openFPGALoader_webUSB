@@ -21,11 +21,19 @@ if (crossOriginIsolated) {
 </head>
 <body>
     <h1>Program FPGA with WebUSB</h1>
-	<div>
-		<label for="ofl_cmd_lbl">openFPGALoader command line:</label><input type="text" id="ofl_cmd" /></br>
+	<table border="1">
+		<tr>
+			<td><label for="ofl_cmd_lbl">openFPGALoader command line:</label></td>
+			<td><input type="text" id="ofl_cmd" /></td>>
+		</tr>
+		<tr>
+
+		<td>
 		<input type="file" id="fileInput">
 		<div id="fileContents"></div>
-	</div>
+		</td>
+		</tr>
+	</table>
 	</br>
     <button id="detectButton">Detect Cables</button>
     <button id="connectButton">Connect to FPGA</button>
@@ -100,18 +108,6 @@ if (crossOriginIsolated) {
 						decodeASCII: true
 					}
 				);
-				//console.log(response);
-				//lines = lines.slice(2);
-				//lines.map( (line, i) => {
-				//    let opt = document.createElement("option");
-				//	const cable = line.split(' ')[0];
-				//    opt.value = i + 1; // the index
-				//    opt.innerHTML = cable;
-				//    select_cable.append(opt);
-				//});
-				console.log(lines);
-				console.log(lines_err);
-				//lines = lines.slice(2);
 				lines.map((line, i) => {
 					if (verbose) {
 						console.log(line);
@@ -178,8 +174,8 @@ if (crossOriginIsolated) {
 				const binaryData = new Uint8Array(event.target.result);
 				fileContent = binaryData;
 				const ofl_cmd = document.getElementById("ofl_cmd")
-				var cmd = ["-c", "digilent"];//ofl_cmd.value.split(' ');
-				cmd.push(file.name);
+				var cmd = ["-c", "digilent", "--quiet"];//ofl_cmd.value.split(' ');
+				cmd.push(filename);
 				var fileData = {[filename]: fileContent};
 				ofl_exec(cmd, "demo", fileData, true);
 			};
