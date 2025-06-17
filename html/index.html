@@ -38,20 +38,57 @@ if (crossOriginIsolated) {
 		</tr>
 	</table>
 	</br>
-    <button id="detectButton">Detect Cables</button>
-    <button id="connectButton">Connect to FPGA</button>
-    <button id="programButton" disabled>Program FPGA</button>
+    <!--<button id="detectButton">Detect Cables</button>
+    <button id="connectButton">Connect to FPGA</button>-->
 
 	<div>
-	<label for="cable_select">Choose a cable:</label></br>
-	<select name="cable" id="cable_select">
-	<option value=0>Default</option>
-	</select>
-	</br>
-	<label for="board_select">Choose a board:</label></br>
-	<select name="board" id="board_select">
-	<option value=0>None</option>
-	</select>
+	<fieldset style="width:0px">
+  		<legend>OpenFPGALoader automatic operations:</legend>
+		<!--<table border="0" style=" border-collapse: collapse;  border: 1px solid black;">-->
+		<table style="border-collapse: collapse;">
+			<tr><td>
+			<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">
+				<tr>
+					<td>
+						<label for="cable_select">Choose a cable:</label></br>
+						<select name="cable" id="cable_select">
+							<option value=0>Default</option>
+						</select>
+					</td>
+					<td>
+						<label for="board_select">Choose a board:</label></br>
+						<select name="board" id="board_select">
+							<option value=0>None</option>
+						</select>
+					</td>
+				</tr>
+			</table>
+			</td></tr>
+			<tr><td>
+				Target:
+				<div>
+					<input type="radio" id="sram" name="ofl_mode" value="sram" checked />
+					<label for="sram">SRAM</label>
+				</div>
+				<div>
+					<input type="radio" id="flash" name="ofl_mode" value="flash" />
+					<label for="flash">Flash</label>
+				</div>
+			</td></tr>
+			<tr><td>
+				<label for="verify">Verify</label>
+    			<input type="checkbox" id="verify" name="ofl_verify" />
+			</td></tr>
+			<tr><td>
+				<label for="ofl_cmd_lbl">Bitstream:</label>
+				<input type="file" id="fileInput">
+			</td></tr>
+			<tr><td>
+	    		<button id="programButton">Program FPGA</button>
+			</td></tr>
+		</table>
+	</fieldset>
+
 	</div>
 	</br>
 
