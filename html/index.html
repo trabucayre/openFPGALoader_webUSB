@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<!--<script type="module" src="main.js"></script>
-<script type="text/javascript">
+<script type="module" src="main.js"></script>
+<!--<script type="text/javascript">
 </script>-->
 <html lang="en">
 <head>
@@ -11,16 +11,16 @@ These are new security requirements for using SharedArrayBuffer.
 You can check in code if cross origin isolation is enabled:
 
 if (crossOriginIsolated) {
-    // SharedArrayBuffer is available
+	// SharedArrayBuffer is available
 } -->
-    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
-    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebUSB openFPGALoader Example</title>
+	<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+	<meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WebUSB openFPGALoader Example</title>
 </head>
 <body>
-    <h1>Program FPGA with WebUSB</h1>
+	<h1>Program FPGA with WebUSB</h1>
 	<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">
 		<thead>
 			<tr><th colspan="2">OpenFPGALoader manual operations</th></tr>
@@ -30,16 +30,19 @@ if (crossOriginIsolated) {
 			<td><input type="text" id="ofl_cmd" style="width:100%; box-sizing:border-box;" /></td>
 		</tr>
 		<tr>
-		<td><label for="ofl_cmd_lbl">Bitstream:</label></td>
-		<td>
-		<input type="file" id="fileInput">
-		<div id="fileContents"></div>
-		</td>
+			<td><label for="ofl_cmd_lbl">Bitstream:</label></td>
+			<td>
+				<input type="file" id="fileInput">
+				<div id="fileContents"></div>
+			</td>
+		</tr>
+		<tr>
+			<td colspan=2><button id="programButtonManual">Program FPGA</button></td>
 		</tr>
 	</table>
 	</br>
-    <!--<button id="detectButton">Detect Cables</button>
-    <button id="connectButton">Connect to FPGA</button>-->
+	<!--<button id="detectButton">Detect Cables</button>
+	<button id="connectButton">Connect to FPGA</button>-->
 
 	<div>
 	<fieldset style="width:0px">
@@ -77,14 +80,14 @@ if (crossOriginIsolated) {
 			</td></tr>
 			<tr><td>
 				<label for="verify">Verify</label>
-    			<input type="checkbox" id="verify" name="ofl_verify" />
+				<input type="checkbox" id="verify" name="ofl_verify" />
 			</td></tr>
 			<tr><td>
 				<label for="ofl_cmd_lbl">Bitstream:</label>
 				<input type="file" id="fileInput">
 			</td></tr>
 			<tr><td>
-	    		<button id="programButton">Program FPGA</button>
+				<button id="programButton">Program FPGA</button>
 			</td></tr>
 		</table>
 	</fieldset>
@@ -92,267 +95,9 @@ if (crossOriginIsolated) {
 	</div>
 	</br>
 
-    <div id="status">Status: Not connected</div>
-    <div id="demo">Status: Not connected</div>
-
-	<!--<script src=openFPGAloader.js></script>-->
-    <script type="module">
-		const demo = document.getElementById('demo');
-		import { runOpenFPGALoader } from 'https://cdn.jsdelivr.net/npm/@yowasp/openfpgaloader/gen/bundle.js';
-		import { lineBuffered, chunked } from 'https://cdn.jsdelivr.net/npm/@yowasp/runtime/lib/util.js';
-		await fill_cables();
-		await fill_boards();
-
-		try {
-			const response = await runYosys(["--version"]);
-            const data = await response.json();
-			demo.textcontent = data;
-			console.log(data);
-		}
-		catch (err) {
-			demo.textContent = "error" + err.message;
-			console.log("plop");
-		}
-
-        const detectButton  = document.getElementById('detectButton');
-        const connectButton = document.getElementById('connectButton');
-        const programButton = document.getElementById('programButton');
-		const select_cable = document.getElementById('cable_select');
-        const status = document.getElementById('status');
-        let device;
-
-        // Handle detect button click
-		//detectButton.addEventListener('click', ofl_detect);
-		function my_load(v) {
-			console.log("hi");
-			const demo = document.getElementById("demo");
-			demo.textContent = demo.textContent + v;
-
-		}
-
-		async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
-			let lines = [];
-			let lines_err = [];
-
-			const div_log = document.getElementById(div_id);
-
-			const device = await navigator.usb.requestDevice({ filters: [] });
-			div_log.innerHTML = "";
-
-			try {
-				const response = await runOpenFPGALoader(args,
-					fileIn,
-					{
-						stdout:lineBuffered((line) => lines.push(line)),
-						stderr:lineBuffered((line) => lines_err.push(line)),
-						decodeASCII: true
-					}
-				);
-				lines.map((line, i) => {
-					if (verbose) {
-						console.log(line);
-					}
-					div_log.innerHTML += line + "</br>\n";
-				});
-			} catch(error) {
-				//div_log.textContent = `Status: Error programming - ${error.message}`;
-                console.error(error);
-				console.log(error);
-			}
-			console.log(lines);
-			console.log(lines_err);
-			return lines;
-		}
-
-		async function fill_cables() {
-			const select_cable = document.getElementById('cable_select');
-			let lines = [];
-			const response = await runOpenFPGALoader(["--list-cables"],
-				{},
-				{
-					stdout:lineBuffered((line) => lines.push(line)),
-					stderr:console.log, decodeASCII: true
-				}
-			);
-			//console.log(response);
-			lines = lines.slice(2);
-			lines.map( (line, i) => {
-			    let opt = document.createElement("option");
-				const cable = line.split(' ')[0];
-			    opt.value = i + 1; // the index
-			    opt.innerHTML = cable;
-			    select_cable.append(opt);
-			});
-		}
-		async function fill_boards() {
-			const select_board = document.getElementById('board_select');
-			let lines = [];
-			const response = await runOpenFPGALoader(["--list-boards"],
-				{},
-				{
-					stdout:lineBuffered((line) => lines.push(line)),
-					stderr:console.log, decodeASCII: true
-				}
-			);
-			lines = lines.slice(2);
-			lines.map( (line, i) => {
-			    let opt = document.createElement("option");
-				const cable = line.split(' ')[0];
-			    opt.value = i + 1; // the index
-			    opt.innerHTML = cable;
-			    select_board.append(opt);
-			});
-		}
-
-		document.getElementById('fileInput').addEventListener('change', async function () {
-			let file = event.target.files[0];
-			const filename = file.name;
-			var fileContent;
-
-			let reader = new FileReader();
-			reader.onload = function (event) {
-				const binaryData = new Uint8Array(event.target.result);
-				fileContent = binaryData;
-				const ofl_cmd = document.getElementById("ofl_cmd")
-				var cmd = ["-c", "digilent", "--quiet"];//ofl_cmd.value.split(' ');
-				cmd.push(filename);
-				var fileData = {[filename]: fileContent};
-				ofl_exec(cmd, "demo", fileData, true);
-			};
-
-			reader.readAsArrayBuffer(file);
-		});
-
-        detectButton.addEventListener('click', async () => {
-			console.log("plop");
-			document.getElementById('demo').innerHTML = "hello";
-			const demo = document.getElementById("demo");
-			const select_cable = document.getElementById("cable_select");
-            try {
-                status.textContent = 'Status: Detect Cables...';
-                //demo.textContent = 'Status: Detect Cables...';
-				demo.textContent - '';
-                
-                // Example: Fetch a bitstream file (replace with your bitstream URL)
-                //const response = await fetch('path/to/arty_bitstream.bit');
-                //const bitstream = await response.arrayBuffer();
-
-                // Convert ArrayBuffer to Uint8Array for WebUSB
-                //const bitstreamData = new Uint8Array(bitstream);
-
-                // Use openFPGALoader to program the FPGA
-				let lines = [];
-				var args = [];
-				if (select_cable.selectedIndex > 0) {
-					var cable = select_cable.options[select_cable.selectedIndex].text;
-					args.push("-c");
-					args.push(cable);
-					console.log(cable);
-				}
-				args.push("--detect");
-				console.log(args);
-				const device = await navigator.usb.requestDevice({ filters: [] });
-        		console.log(`Selected device: ${device.productName}`);
-				const response = await runOpenFPGALoader(args,
-					{},
-					{
-						stdout:lineBuffered((line) => lines.push(line)),
-						stderr:console.log, decodeASCII: true
-					}
-				);
-				lines = lines.slice(2);
-				lines.map((line, i) => {
-					console.log(line);
-					demo.innerHTML += line + "</br>\n";
-				});
-				//console.log(typeof lines);
-				//console.log(lines.length);
-				//let cables_name = [];
-				//lines.forEach((cable) => {
-				//	const name = cable.split(' ')[0];
-				//	cables_name.push(name);
-				//});
-				//demo.innerHTML = cables_name.join("<br>\n");
-				//lines.map( (line, i) => {
-				//    let opt = document.createElement("option");
-				//	const cable = line.split(' ')[0];
-				//    opt.value = i + 1; // the index
-				//    opt.innerHTML = cable;
-				//    select_cable.append(opt);
-				//});
-				//const response = await runOpenFPGALoader(["--help"], {}, {stdout:my_load, stderr:console.log, decodeASCII: true});
-                //await openFPGALoader({
-				//	scanUSB: true
-                //});
-
-                //status.textContent = 'Status: FPGA programmed successfully!';
-				//const t = await response;
-				////console.log(typeof await response)
-				//console.log("\n\n")
-				//console.log(t)
-				//console.log("\n\n")
-				//const text = t.toString();
-				//console.log(text);
-				//demo.textContent = text;
-            } catch (error) {
-                status.textContent = `Status: Error programming - ${error.message}`;
-                //console.error(error);
-            }
-        });
-
-        // Handle connect button click
-        connectButton.addEventListener('click', async () => {
-            try {
-                // Request a USB device with filters (adjust VID/PID as needed)
-                device = await navigator.usb.requestDevice({ filters: [] });
-                await device.open();
-                await device.selectConfiguration(1);
-                await device.claimInterface(0);
-                status.textContent = `Status: Connected to ${device.productName}`;
-                programButton.disabled = false;
-                connectButton.disabled = true;
-            } catch (error) {
-                status.textContent = `Status: Error connecting - ${error.message}`;
-                console.error(error);
-            }
-        });
-
-        // Handle program button click
-        programButton.addEventListener('click', async () => {
-            try {
-                status.textContent = 'Status: Loading bitstream...';
-                
-                // Example: Fetch a bitstream file (replace with your bitstream URL)
-                const response = await fetch('path/to/arty_bitstream.bit');
-                const bitstream = await response.arrayBuffer();
-
-                // Convert ArrayBuffer to Uint8Array for WebUSB
-                const bitstreamData = new Uint8Array(bitstream);
-
-                // Use openFPGALoader to program the FPGA
-                await openFPGALoader({
-                    device: device,
-                    bitstream: bitstreamData,
-                    board: 'arty', // Specify your FPGA board (e.g., 'arty')
-                    writeSram: true // Program to SRAM (use writeFlash: true for flash)
-                });
-
-                status.textContent = 'Status: FPGA programmed successfully!';
-            } catch (error) {
-                status.textContent = `Status: Error programming - ${error.message}`;
-                console.error(error);
-            }
-        });
-
-        // Handle device disconnection
-        navigator.usb.addEventListener('disconnect', (event) => {
-            if (event.device === device) {
-                status.textContent = 'Status: Device disconnected';
-                programButton.disabled = true;
-                connectButton.disabled = false;
-                device = null;
-            }
-        });
-    </script>
+	<div id="oflCmdManual"></div>
+	<div id="USBStatus">Status: Not connected</div>
+	<div id="OFLStatus">Program status: NA</div>
+	<div id="demo">Status: Not connected</div>
 </body>
 </html>
