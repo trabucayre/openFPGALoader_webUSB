@@ -70,21 +70,21 @@ if (crossOriginIsolated) {
 			<tr><td>
 				Target:
 				<div>
-					<input type="radio" id="sram" name="ofl_mode" value="sram" checked />
+					<input type="radio" id="ofl_sram" name="ofl_mode" value="sram" checked />
 					<label for="sram">SRAM</label>
 				</div>
 				<div>
-					<input type="radio" id="flash" name="ofl_mode" value="flash" />
+					<input type="radio" id="ofl_flash" name="ofl_mode" value="flash" />
 					<label for="flash">Flash</label>
 				</div>
 			</td></tr>
 			<tr><td>
 				<label for="verify">Verify</label>
-				<input type="checkbox" id="verify" name="ofl_verify" />
+				<input type="checkbox" id="ofl_verify" name="ofl_verify" />
 			</td></tr>
 			<tr><td>
 				<label for="ofl_cmd_lbl">Bitstream:</label>
-				<input type="file" id="fileInput">
+				<input type="file" id="fileAutoInput">
 			</td></tr>
 			<tr><td>
 				<button id="programButton">Program FPGA</button>

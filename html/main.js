@@ -127,30 +127,49 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 
 // Handle program button click
 programButton.addEventListener('click', async () => {
-	const OFLStatus = document.getElementById("OFLStatus")
-    try {
-        OFLStatus.textContent = 'Status: Loading bitstream...';
-        
-        // Example: Fetch a bitstream file (replace with your bitstream URL)
-        const response = await fetch('path/to/arty_bitstream.bit');
-        const bitstream = await response.arrayBuffer();
+	const cable     = document.getElementById("cable_select");
+	const board     = document.getElementById("board_select");
+	const tgt_flash = document.getElementById("ofl_flash").checked;
+	const tgt_sram  = document.getElementById("ofl_sram").checked;
+	const verify    = document.getElementById("ofl_verify").checked;
+	const file      = document.getElementById("fileAutoInput").files[0];
 
-        // Convert ArrayBuffer to Uint8Array for WebUSB
-        const bitstreamData = new Uint8Array(bitstream);
+	var cmd = ["--quiet"]
+	if (cable.selectedIndex > 0) {
+		cmd.push("-c");
+		cmd.push(cable.options[cable.selectedIndex].text);
+	}
+	if (board.selectedIndex > 0) {
+		cmd.push("-b");
+		cmd.push(board.options[board.selectedIndex].text);
+	}
+	if (tgt_flash) {
+		cmd.push("-f")
+		if (verify)
+			cmd.push("--verify")
+	}
+	console.log(cmd.join(" "))
 
-        // Use openFPGALoader to program the FPGA
-        await openFPGALoader({
-            device: device,
-            bitstream: bitstreamData,
-            board: 'arty', // Specify your FPGA board (e.g., 'arty')
-            writeSram: true // Program to SRAM (use writeFlash: true for flash)
-        });
+	const filename = file.name;
+	let reader     = new FileReader();
 
-        OFLStatus.textContent = 'Status: FPGA programmed successfully!';
-    } catch (error) {
-        OFLStatus.textContent = `Status: Error programming - ${error.message}`;
-        console.error(error);
-    }
+	reader.onload = function (event) {
+		OFLStatus.textContent = 'Status: Loading bitstream...';
+		const binaryData      = new Uint8Array(event.target.result);
+		const fileContent     = binaryData;
+		const fileData        = {[filename]: fileContent};
+		cmd.push(filename);
+		document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
+		try {
+			ofl_exec(cmd, "demo", fileData, true);
+			OFLStatus.textContent = 'Status: FPGA programmed successfully!';
+		} catch (error) {
+			OFLStatus.textContent = `Status: Error programming - ${error.message}`;
+			console.error(errror);
+		}
+	};
+
+	reader.readAsArrayBuffer(file);
 });
 
 // Handle device disconnection
