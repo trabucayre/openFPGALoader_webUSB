@@ -21,14 +21,16 @@ const connectButton = document.getElementById('connectButton');
 const programButton = document.getElementById('programButton');
 const select_cable  = document.getElementById('cable_select');
 const USBStatus     = document.getElementById('USBStatus');
-const OFLStatus     = document.getElementById('OFLStatus');
 let device          = null;
 
 async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
-	let lines = [];
-	let lines_err = [];
+	const OFLStatus  = document.getElementById('OFLStatus');
+	let lines        = [];
+	let lines_err    = [];
 
 	const div_log = document.getElementById(div_id);
+
+	OFLStatus.innerHTML = 'Status: Loading bitstream...';
 
 	if (!device) {
 		console.log("device null");
@@ -50,8 +52,10 @@ async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
 			}
 			div_log.innerHTML += line + "</br>\n";
 		});
+		OFLStatus.innerHTML = 'Status: FPGA programmed successfully!';
 	} catch(error) {
         console.error(error);
+		OFLStatus.textContent = `Status: Error programming - ${error.message}`;
 	}
 	console.log(lines);
 	console.log(lines_err);
@@ -103,7 +107,6 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	let reader     = new FileReader();
 
 	reader.onload = function (event) {
-		OFLStatus.textContent = 'Status: Loading bitstream...';
 		const binaryData      = new Uint8Array(event.target.result);
 		const fileContent     = binaryData;
 		const ofl_cmd         = document.getElementById("ofl_cmd")
@@ -115,9 +118,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 		document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
 		try {
 			ofl_exec(cmd, "demo", fileData, true);
-			OFLStatus.textContent = 'Status: FPGA programmed successfully!';
 		} catch (error) {
-			OFLStatus.textContent = `Status: Error programming - ${error.message}`;
 			console.error(errror);
 		}
 	};
@@ -154,7 +155,6 @@ programButton.addEventListener('click', async () => {
 	let reader     = new FileReader();
 
 	reader.onload = function (event) {
-		OFLStatus.textContent = 'Status: Loading bitstream...';
 		const binaryData      = new Uint8Array(event.target.result);
 		const fileContent     = binaryData;
 		const fileData        = {[filename]: fileContent};
@@ -162,9 +162,7 @@ programButton.addEventListener('click', async () => {
 		document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
 		try {
 			ofl_exec(cmd, "demo", fileData, true);
-			OFLStatus.textContent = 'Status: FPGA programmed successfully!';
 		} catch (error) {
-			OFLStatus.textContent = `Status: Error programming - ${error.message}`;
 			console.error(errror);
 		}
 	};
