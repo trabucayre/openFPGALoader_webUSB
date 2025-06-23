@@ -24,30 +24,43 @@ if (crossOriginIsolated) {
 
 	<div>
 		<h2>Note: for Linux users, ftdi_sio driver must be unloaded with sudo modprobe -r ftdi_sio</h2>
+		<h2>Note: Google Chrome must be used: USB access is not supported by firefox</h2>
 	</div>
+	<p>
+	This page offers two ways to program an FPGA directly from a navigator:
+	<ul>
+		<li>Manual mode requires openFPGALoader's argument exactly as done via a terminal</li>
+		<li>Automatic mode allows users to select:
+			<ul>
+				<li>target board and/or cable via a list</li>
+				<li>bitstream destination (SRAM or Flash (not supported for Xilinx/Altera/Efinix)). For Flash access a verification
+					step may be optionaly performed after write.</li>
+				<li>the bistream file</li>
+			</ul>
+		</li>
+	</ul>
+	</p>
+	<fieldset style="width:0px">
+		<legend>OpenFPGALoader manual operations</legend>
+		<!--<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">-->
+		<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
+			<tr>
+				<td style="text-align=right;"><label for="ofl_cmd">Command line args:</label></td>
+				<td><input type="text" id="ofl_cmd" style="width:100%; box-sizing:border-box;" /></td>
+			</tr>
+			<tr>
+				<td style="text-align:right;"><label for="fileInput">Bitstream:</label></td>
+				<td>
+					<input type="file" id="fileInput">
+					<div id="fileContents"></div>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align:center;" colspan=2><button id="programButtonManual">Program FPGA</button></td>
+			</tr>
+		</table>
+	</fieldset>
 	</br>
-	<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">
-		<thead>
-			<tr><th colspan="2">OpenFPGALoader manual operations</th></tr>
-		</thead>
-		<tr>
-			<td><label for="ofl_cmd_lbl">Options / command line:</label></td>
-			<td><input type="text" id="ofl_cmd" style="width:100%; box-sizing:border-box;" /></td>
-		</tr>
-		<tr>
-			<td><label for="ofl_cmd_lbl">Bitstream:</label></td>
-			<td>
-				<input type="file" id="fileInput">
-				<div id="fileContents"></div>
-			</td>
-		</tr>
-		<tr>
-			<td colspan=2><button id="programButtonManual">Program FPGA</button></td>
-		</tr>
-	</table>
-	</br>
-	<!--<button id="detectButton">Detect Cables</button>
-	<button id="connectButton">Connect to FPGA</button>-->
 
 	<div>
 	<fieldset style="width:0px">
@@ -76,19 +89,19 @@ if (crossOriginIsolated) {
 				Target:
 				<div>
 					<input type="radio" id="ofl_sram" name="ofl_mode" value="sram" checked />
-					<label for="sram">SRAM</label>
+					<label for="ofl_sram">SRAM</label>
 				</div>
 				<div>
 					<input type="radio" id="ofl_flash" name="ofl_mode" value="flash" />
-					<label for="flash">Flash</label>
+					<label for="ofl_flash">Flash</label>
 				</div>
 			</td></tr>
 			<tr><td>
-				<label for="verify">Verify</label>
+				<label for="ofl_verify">Verify</label>
 				<input type="checkbox" id="ofl_verify" name="ofl_verify" />
 			</td></tr>
 			<tr><td>
-				<label for="ofl_cmd_lbl">Bitstream:</label>
+				<label for="fileAutoInput">Bitstream:</label>
 				<input type="file" id="fileAutoInput">
 			</td></tr>
 			<tr><td>
