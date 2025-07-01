@@ -10,6 +10,3 @@
 [submodule "libftdi-src"]
 	path = libftdi-src
 	url = git://developer.intra2net.com/libftdi
-[submodule "openFPGALoader-src"]
-	path = openFPGALoader-src
-	url = https://github.com/trabucayre/openFPGALoader
