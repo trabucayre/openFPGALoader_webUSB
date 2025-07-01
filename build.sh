@@ -52,8 +52,13 @@ check_dependencies() {
 	if [[ "x${ret}x" == "xx" ]]; then
 		deps="$deps npm"
 	fi
-	echo "sudo apt install -y $deps"
-	sudo apt install -y $deps
+
+	if [[ "x${deps}x" == "xx" ]]; then
+		echo "No missing dependencies"
+	else
+		echo "sudo apt install -y $deps"
+		sudo apt install -y $deps
+	fi
 }
 
 # check if everything must be build or only one step.
@@ -96,10 +101,7 @@ else
     fi
 fi
 
-echo "a"
 check_dependencies
-echo "b"
-#exit
 
 # EMSDK
 
@@ -179,5 +181,5 @@ npm run build
 mkdir -p dist/
 npm pack --pack-destination=dist/
 popd
-cp npmjs/bundle.js html/
-cp npmjs/openFPGALoader.wasm html/
+cp npmjs/gen/bundle.js html/
+cp npmjs/gen/openFPGALoader.wasm html/
