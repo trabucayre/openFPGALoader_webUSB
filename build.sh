@@ -161,6 +161,7 @@ fi
 
 if [[ $build_openfpgaloader == "true" ]]; then
 	[ -e ./openFPGALoader ] || git clone https://github.com/trabucayre/openFPGALoader
+	[ -e ./openFPGALoader-build ] && rm -rf openFPGALoader-build
 	emcmake cmake -S openFPGALoader -B openFPGALoader-build \
 	    -DCMAKE_CXX_FLAGS="-fexceptions" \
 	    -DCMAKE_EXE_LINKER_FLAGS="-O2 -no-pthread -lembind ${EMCC_FLAGS}" \
