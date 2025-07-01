@@ -158,7 +158,8 @@ fi
 # openFPGALoader
 
 if [[ $build_openfpgaloader == "true" ]]; then
-	emcmake cmake -S openFPGALoader-src -B openFPGALoader-build \
+	[ -e ./openFPGALoader ] || git clone https://github.com/trabucayre/openFPGALoader
+	emcmake cmake -S openFPGALoader -B openFPGALoader-build \
 	    -DCMAKE_CXX_FLAGS="-fexceptions" \
 	    -DCMAKE_EXE_LINKER_FLAGS="-O2 -no-pthread -lembind ${EMCC_FLAGS}" \
 	    -DCMAKE_EXECUTABLE_SUFFIX_CXX=".mjs"
