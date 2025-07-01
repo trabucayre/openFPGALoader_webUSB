@@ -1,3 +1,6 @@
 zlib-build
 prefix
 *-build
+npmjs/node_modules
+npmjs/gen
+npmjs/dist
