@@ -184,3 +184,8 @@ npm pack --pack-destination=dist/
 popd
 cp npmjs/gen/bundle.js html/
 cp npmjs/gen/openFPGALoader.wasm html/
+
+# SpiOverJtag bitstreams
+[ -e ./html/spiOverJtag] || mkdir html/spiOverJtag
+cp openFPGALoader/spiOverJtag/*.gz html/spiOverJtag
+cp openFPGALoader-build/*.gz html/spiOverJtag
