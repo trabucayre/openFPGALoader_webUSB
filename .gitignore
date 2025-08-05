@@ -5,3 +5,5 @@ npmjs/node_modules
 npmjs/gen
 npmjs/dist
 openFPGALoader
+html/bundle.js
+html/spiOverJtag
