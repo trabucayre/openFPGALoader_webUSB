@@ -174,6 +174,7 @@ fi
 mkdir -p npmjs/gen
 
 cp openFPGALoader-build/openFPGALoader.* npmjs/gen
+source emsdk/emsdk_env.sh
 pushd npmjs
 node prepare.mjs
 npm install
@@ -186,6 +187,6 @@ cp npmjs/gen/bundle.js html/
 cp npmjs/gen/openFPGALoader.wasm html/
 
 # SpiOverJtag bitstreams
-[ -e ./html/spiOverJtag] || mkdir html/spiOverJtag
+[[ -e ./html/spiOverJtag ]] || mkdir html/spiOverJtag
 cp openFPGALoader/spiOverJtag/*.gz html/spiOverJtag
 cp openFPGALoader-build/*.gz html/spiOverJtag
