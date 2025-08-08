@@ -160,7 +160,13 @@ fi
 # openFPGALoader
 
 if [[ $build_openfpgaloader == "true" ]]; then
-	[ -e ./openFPGALoader ] || git clone https://github.com/trabucayre/openFPGALoader
+	if [[ -e ./openFPGALoader ]]; then
+		pushd openFPGALoader
+		git pull
+		popd
+	else
+		git clone https://github.com/trabucayre/openFPGALoader
+	fi
 	[ -e ./openFPGALoader-build ] && rm -rf openFPGALoader-build
 	emcmake cmake -S openFPGALoader -B openFPGALoader-build \
 	    -DCMAKE_CXX_FLAGS="-fexceptions" \
