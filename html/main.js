@@ -110,19 +110,43 @@ async function fill_boards() {
 }
 
 document.getElementById('programButtonManual').addEventListener('click', async function () {
-	let file       = document.getElementById("fileInput").files[0]
 	console.log(document.getElementById("fileInput").files[0])
+	let file       = document.getElementById("fileInput").files[0]
 	const filename = file.name;
 	let reader     = new FileReader();
 	var cmd        = ["-c", "digilent", "-f", "--detect"];
 	//var cmd        = ofl_cmd.value.split(' ');
 	console.log("hello");
 
+	//cmd.push("--fpga-part");
+	//cmd.push("xc7a35tcsg324");
+	cmd.push("--board");
+	cmd.push("arty");
+
 	// Detect if command if to flash a bitstream
 	// if so, detectSpiOverJtagName will return spiOverJtag bitstream
 	// name, otherwise ""
-	const soj_name      = await detectSpiOverJtagName(cmd);
+	const ret           = await detectSpiOverJtagName(cmd);
+	const soj_name      = ret[1];
+	const ret_code      = ret[0];
 	var soj_fileContent = null;
+	// FIXME: todo something with return code.
+	var detect_status = "";
+	if (ret_code < 0) {
+		detect_status = "Error to detect FPGA part: can't flash bitstream";
+	} else if (ret_code == 0) {
+		detect_status = "SpiOverJtag not required";
+	} else {
+		detect_status = "FPGA Part detected " + soj_name + " method: "
+		if (ret_code == 1) {
+			detect_status += "--fpga_part option";
+		} else if (ret_code == 2) {
+			detect_status += "board list entry";
+		} else if (ret_code == 3) {
+			detect_status += "FPGA detection with --detect option";
+		}
+	}
+	console.log(detect_status);
 	if (soj_name) {
 		// read bitstream from the server to be used by utils when
 		// openFPGALoader will be executed
@@ -211,23 +235,34 @@ programButton.addEventListener('click', async () => {
 // cmd_line must be a list
 // return a list with the first argument is a status and second the
 // FPGA code.
+// -3: no device found.
+// -2: generic error.
+// -1: No full part_part for a non Xilinx Artix or Spartan7
+// 0: Not flash action
+// 1: fpga_part found by option
+// 2: fpga_part found by board entry
+// 3: fpga_part found via --detect
 async function detectSpiOverJtagName(cmd_line)
 {
+	var ret_status = 0;
+	var soj_name   = "";
 	console.log(cmd_line);
 
 	// search If the command contains flash argument (-f or --flash).
 	if (!(cmd_line.includes("-f") || cmd_line.includes("--flash"))) {
-		return [0, ""];
+		return [ret_status, ""];
 	}
 
 	// command to send if it's not possible to deduces part from
-	// command line.
+	// the command line.
 	var search_cmd = ["--detect"];
 
 	// First quick try: user has provided part
 	if (cmd_line.indexOf("--fpga-part") != -1) {
 		const part = cmd_line[cmd_line.indexOf("--fpga-part") + 1];
-		return [1, part];
+		ret_status = 1;
+		soj_name   = part;
+		return [ret_status, "spiOverJtag_" + part + ".bit.gz"];
 	}
 
 	// For Xilinx, altera and efinix the board entry MUST
@@ -238,12 +273,17 @@ async function detectSpiOverJtagName(cmd_line)
 		board_index = cmd_line.indexOf("--board");
 	if (board_index != -1) {
 		const board_name = cmd_line[board_index + 1];
-		const fpga_part  = list_boards[board_name][fpga_part];
+		const fpga_part  = list_boards[board_name]["fpga_part"];
 		search_cmd.push("-b");
 		search_cmd.push(board_name);
 		if (fpga_part != "Undefined")
-			return [1, fpga_part];
+			return [2, "spiOverJtag_" + fpga_part + ".bit.gz"];
 	}
+
+	// No --fpga_part option nor board or board without
+	// fpga_part section: extract information from
+	// openFPGALoader with --detect option
+	// FIXME: more than one device is not supported.
 
 	// Search for short/long cable argument
 	var cable_index = cmd_line.indexOf("-c");
@@ -254,32 +294,46 @@ async function detectSpiOverJtagName(cmd_line)
 		search_cmd.push(cmd_line[cable_index + 1]);
 	}
 
-	// No --fpga_part option nor board or board without
-	// fpga_part section: extract information from
-	// openFPGALoader with --detect option
+	if (ret_status != 1 && ret_status != 2) {
+		// Executes --detect command to have manufacturer name and
+		// FPGA Model
+		const lines        = await ofl_exec(search_cmd, "demo", [], false);
 
-	// Executes --detect command to have manufacturer name and
-	// FPGA Model
-	const lines        = await ofl_exec(search_cmd, "demo", [], false);
+		// Extracts vendor and Model
+		const vendor_index = lines.findIndex(findManufacturer);
+		const model_index  = lines.findIndex(findModel);
 
-	// Extracts vendor and Model
-	const vendor_index = lines.findIndex(findManufacturer);
-	const model_index  = lines.findIndex(findModel);
+		// No device found
+		if (vendor_index == -1)
+			return [-3, ""];
 
-	if (vendor_index != -1) {
-		const t = lines[vendor_index].replace(/  +/g, ' ').split(" ")[1];
+		const t = lines[vendor_index].replace(/  +/g, ' ').split(" ")[1].toLowerCase();
 		if (t == "xilinx") {
-			var tt       = lines[model_index].replace(/  +/g, ' ').split(" ")[1];
-			if (tt == "xc7a35")
-				tt = "xc7a35t";
-			console.log(tt)
-			const soj_name = "spiOverJtag_" + tt + ".bit.gz";
-			console.log("requires spiOverJtag: "+ soj_name);
-			return [1, soj_name];
+			if (ret_status == 0) {
+				var tt       = lines[model_index].replace(/  +/g, ' ').split(" ")[1];
+				// Only Xilinx Artix7 and Spartan7 have a generic spiOverJtag bitstream
+				// per size.
+				if (!(tt.includes("xc7a") || tt.includes("xc7s")))
+					return [-1, ""];
+				if (tt == "xc7a35")
+					tt = "xc7a35t";
+				soj_name   = "spiOverJtag_" + tt + ".bit.gz";
+				ret_status = 3;
+				console.log(tt);
+				console.log("requires spiOverJtag: "+ soj_name);
+			}
+		// For Efinix & Altera FPGA model must be fully provided
+		} else if (t == "efinix" || t == "altera") {
+			console.log("Error: spiOverJtag bitstream must be specified");
+			return [-1, ""];
 		}
+		// Nothing to do for FPGA with internal SPI Flash access logic.
 	}
 
-	return [0, ""]
+	if (ret_status > 0)
+		soj_name = "spiOverJtag" + soj_name + ".bit.gz";
+
+	return [ret_status, soj_name]
 }
 function findManufacturer(l) {
 	return l.includes("manufacturer");
