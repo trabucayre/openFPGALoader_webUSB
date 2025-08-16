@@ -8,15 +8,27 @@ await fill_cables();
 await fill_boards();
 
 const demo = document.getElementById('demo');
+const demo2 = document.getElementById('demo2');
 
 try {
 	const response = await runYosys(["--version"]);
     const data = await response.json();
-	demo.textcontent = data;
+	demo.textcontent = '<font color="green">' + data + '</font>';
+	demo2.textcontent = '<font color="green">' + data + '</font>';
 	console.log(data);
 }
 catch (err) {
-	demo.textContent = "error" + err.message;
+	var span1 = document.createElement("mess1");
+	span1.innerHTML = "</br>Truc";
+	span1.style.color = "black";
+	var span2 = document.createElement("mess2");
+	span2.innerHTML = "Error " + err.message;
+	span2.style.color = "red";
+
+	demo.innerHTML = 'Plop: <font color="red">error ' + err.message + ' blabla</font>';
+	//demo2.textContent = '<span style="color:red">error ' + err.message + '</span>';
+	demo2.appendChild(span1);
+	demo2.appendChild(span2);
 	console.log("plop");
 }
 
@@ -25,6 +37,7 @@ const connectButton = document.getElementById('connectButton');
 const programButton = document.getElementById('programButton');
 const select_cable  = document.getElementById('cable_select');
 const USBStatus     = document.getElementById('USBStatus');
+const oflOpStatus   = document.getElementById('oflOpStatus');
 let device          = null;
 
 async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
@@ -123,6 +136,9 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	cmd.push("--board");
 	cmd.push("arty");
 
+	// Clear status area.
+	oflOpStatus.innerHTML = "";
+
 	// Detect if command if to flash a bitstream
 	// if so, detectSpiOverJtagName will return spiOverJtag bitstream
 	// name, otherwise ""
@@ -132,11 +148,16 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	var soj_fileContent = null;
 	// FIXME: todo something with return code.
 	var detect_status = "";
+	var mess          = "SpiOverJtag Bridge: ";
 	if (ret_code < 0) {
-		detect_status = "Error to detect FPGA part: can't flash bitstream";
+		detect_status = "<font color=#ff0000>>Error to detect FPGA part: can't flash bitstream</font>";
+		mess += '<font color="red">Error. Please adds --fpga-part option or --board</font>';
+		return;
 	} else if (ret_code == 0) {
 		detect_status = "SpiOverJtag not required";
+		mess += '<font color="blue">Not required.</font>'
 	} else {
+		mess += '<font color="green">Ok.</font>'
 		detect_status = "FPGA Part detected " + soj_name + " method: "
 		if (ret_code == 1) {
 			detect_status += "--fpga_part option";
@@ -147,6 +168,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 		}
 	}
 	console.log(detect_status);
+	oflOpStatus.innerHTML += mess;
 	if (soj_name) {
 		// read bitstream from the server to be used by utils when
 		// openFPGALoader will be executed
