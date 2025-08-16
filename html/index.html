@@ -40,75 +40,82 @@ if (crossOriginIsolated) {
 		</li>
 	</ul>
 	</p>
-	<fieldset style="width:0px">
-		<legend>OpenFPGALoader manual operations</legend>
-		<!--<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">-->
-		<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
-			<tr>
-				<td style="text-align=right;"><label for="ofl_cmd">Command line args:</label></td>
-				<td><input type="text" id="ofl_cmd" style="width:100%; box-sizing:border-box;" /></td>
-			</tr>
-			<tr>
-				<td style="text-align:right;"><label for="fileInput">Bitstream:</label></td>
-				<td>
-					<input type="file" id="fileInput">
-					<div id="fileContents"></div>
-				</td>
-			</tr>
-			<tr>
-				<td style="text-align:center;" colspan=2><button id="programButtonManual">Program FPGA</button></td>
-			</tr>
-		</table>
-	</fieldset>
-	</br>
-
-	<div>
-	<fieldset style="width:0px">
-  		<legend>OpenFPGALoader automatic operations:</legend>
-		<!--<table border="0" style=" border-collapse: collapse;  border: 1px solid black;">-->
-		<table style="border-collapse: collapse;">
-			<tr><td>
-			<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">
+	<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
+		<tr><td style="text-align:left;">
+		<fieldset style="width:0px">
+			<legend>OpenFPGALoader manual operations</legend>
+			<!--<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">-->
+			<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
 				<tr>
+					<td style="text-align=right;"><label for="ofl_cmd">Command line args:</label></td>
+					<td><input type="text" id="ofl_cmd" style="width:100%; box-sizing:border-box;" /></td>
+				</tr>
+				<tr>
+					<td style="text-align:right;"><label for="fileInput">Bitstream:</label></td>
 					<td>
-						<label for="cable_select">Choose a cable:</label></br>
-						<select name="cable" id="cable_select">
-							<option value=0>Default</option>
-						</select>
-					</td>
-					<td>
-						<label for="board_select">Choose a board:</label></br>
-						<select name="board" id="board_select">
-							<option value=0>None</option>
-						</select>
+						<input type="file" id="fileInput">
+						<div id="fileContents"></div>
 					</td>
 				</tr>
+				<tr>
+					<td style="text-align:center;" colspan=2><button id="programButtonManual">Program FPGA</button></td>
+				</tr>
 			</table>
-			</td></tr>
-			<tr><td>
-				Target:
-				<div>
-					<input type="radio" id="ofl_sram" name="ofl_mode" value="sram" checked />
-					<label for="ofl_sram">SRAM</label>
-				</div>
-				<div>
-					<input type="radio" id="ofl_flash" name="ofl_mode" value="flash" />
-					<label for="ofl_flash">Flash</label>
-				</div>
-			</td></tr>
-			<tr><td>
-				<label for="ofl_verify">Verify</label>
-				<input type="checkbox" id="ofl_verify" name="ofl_verify" />
-			</td></tr>
-			<tr><td>
-				<label for="fileAutoInput">Bitstream:</label>
-				<input type="file" id="fileAutoInput">
-			</td></tr>
-			<tr><td>
-				<button id="programButton">Program FPGA</button>
-			</td></tr>
-		</table>
-	</fieldset>
+		</fieldset>
+		</br>
+
+		<div>
+		<fieldset style="width:0px">
+			<legend>OpenFPGALoader automatic operations:</legend>
+			<!--<table border="0" style=" border-collapse: collapse;  border: 1px solid black;">-->
+			<table style="border-collapse: collapse;">
+				<tr><td>
+				<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">
+					<tr>
+						<td>
+							<label for="cable_select">Choose a cable:</label></br>
+							<select name="cable" id="cable_select">
+								<option value=0>Default</option>
+							</select>
+						</td>
+						<td>
+							<label for="board_select">Choose a board:</label></br>
+							<select name="board" id="board_select">
+								<option value=0>None</option>
+							</select>
+						</td>
+					</tr>
+				</table>
+				</td></tr>
+				<tr><td>
+					Target:
+					<div>
+						<input type="radio" id="ofl_sram" name="ofl_mode" value="sram" checked />
+						<label for="ofl_sram">SRAM</label>
+					</div>
+					<div>
+						<input type="radio" id="ofl_flash" name="ofl_mode" value="flash" />
+						<label for="ofl_flash">Flash</label>
+					</div>
+				</td></tr>
+				<tr><td>
+					<label for="ofl_verify">Verify</label>
+					<input type="checkbox" id="ofl_verify" name="ofl_verify" />
+				</td></tr>
+				<tr><td>
+					<label for="fileAutoInput">Bitstream:</label>
+					<input type="file" id="fileAutoInput">
+				</td></tr>
+				<tr><td>
+					<button id="programButton">Program FPGA</button>
+				</td></tr>
+			</table>
+		</fieldset>
+	</td><!-- end of openFPGALoader forms -->
+	<td>
+		<div id="oflOpStatus"></div>
+	</tr><td>
+	</table>
 
 	</div>
 	</br>
@@ -117,5 +124,6 @@ if (crossOriginIsolated) {
 	<div id="USBStatus">Status: Not connected</div>
 	<div id="OFLStatus">Program status: NA</div>
 	<div id="demo">Status: Not connected</div>
+	<p id="demo2">Status: Not connected</p>
 </body>
 </html>
