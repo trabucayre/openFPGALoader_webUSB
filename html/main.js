@@ -124,10 +124,10 @@ async function fill_boards() {
 
 document.getElementById('programButtonManual').addEventListener('click', async function () {
 	console.log(document.getElementById("fileInput").files[0])
-	let file       = document.getElementById("fileInput").files[0]
-	const filename = file.name;
-	let reader     = new FileReader();
-	var cmd        = ["-c", "digilent", "-f", "--detect"];
+	let file     = document.getElementById("fileInput").files[0];
+	var filename = null;
+	let reader   = new FileReader();
+	var cmd      = ["-c", "digilent", "-f", "--detect"];
 	//var cmd        = ofl_cmd.value.split(' ');
 	console.log("hello");
 
@@ -143,7 +143,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	// if so, detectSpiOverJtagName will return spiOverJtag bitstream
 	// name, otherwise ""
 	const ret           = await detectSpiOverJtagName(cmd);
-	const soj_name      = ret[1];
+	var soj_name        = ret[1];
 	const ret_code      = ret[0];
 	var soj_fileContent = null;
 	// FIXME: todo something with return code.
@@ -157,7 +157,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 		detect_status = "SpiOverJtag not required";
 		mess += '<font color="blue">Not required.</font>'
 	} else {
-		mess += '<font color="green">Ok.</font>'
+		mess += '<font color="green">Ok (' + soj_name + ').</font>'
 		detect_status = "FPGA Part detected " + soj_name + " method: "
 		if (ret_code == 1) {
 			detect_status += "--fpga_part option";
@@ -168,45 +168,77 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 		}
 	}
 	console.log(detect_status);
-	oflOpStatus.innerHTML += mess;
+	oflOpStatus.innerHTML += mess + "</br>";
+	//soj_name +=".t"
+	var span_soj_dl = document.createElement("span_soj_dl");
+	oflOpStatus.appendChild(span_soj_dl);
 	if (soj_name) {
 		// read bitstream from the server to be used by utils when
 		// openFPGALoader will be executed
 		const soj_file_url = "spiOverJtag/" + soj_name;
+		span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge:';
 		await readBinaryFileFromUrl(soj_file_url).then(uint8Array => {
 		    if (uint8Array) {
+				span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <font color="green">Done</font>';
 				soj_fileContent = uint8Array;
-		    }
+		    } else {
+				span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <font color="red">Fail</font>';
+				return;
+			}
 		});
+	} else {
+		span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <font color="blue">Not required</font>';
 	}
 
-	reader.onload = function (event) {
-		const binaryData  = new Uint8Array(event.target.result);
-		const fileContent = binaryData;
-		const ofl_cmd     = document.getElementById("ofl_cmd")
-		var fileData      = {};
-		if (soj_name == "") {
-			fileData      = {[filename]: fileContent};
-		} else {
-			console.log(soj_fileContent);
-			fileData      = {
-				[filename]: fileContent,
-				[soj_name]: soj_fileContent,
-			};
-			cmd.push("--bridge");
-			cmd.push(soj_name);
-		}
-		cmd.push("--quiet");
-		cmd.push(filename);
-		document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
-		try {
-			ofl_exec(cmd, "demo", fileData, true);
-		} catch (error) {
-			console.error(errror);
-		}
-	};
+	//reader.onload = function (event) {
+	//	const binaryData  = new Uint8Array(event.target.result);
+	//	const fileContent = binaryData;
+	//	const ofl_cmd     = document.getElementById("ofl_cmd")
+	//	var fileData      = {};
+	//	if (soj_name == "") {
+	//		fileData      = {[filename]: fileContent};
+	//	} else {
+	//		console.log(soj_fileContent);
+	//		fileData      = {
+	//			[filename]: fileContent,
+	//			[soj_name]: soj_fileContent,
+	//		};
+	//		cmd.push("--bridge");
+	//		cmd.push(soj_name);
+	//	}
+	//	cmd.push("--quiet");
+	//	cmd.push(filename);
+	//
+	//	var span_ofl_exec = document.createElement("span_ofl_exec");
+	//	oflOpStatus.appendChild(span_ofl_exec);
+	//	span_soj_dl.innerHTML = 'Execute openFPGALoader:';
+	//
+	//	document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
+	//	try {
+	//		ofl_exec(cmd, "demo", fileData, true);
+	//		span_soj_dl.innerHTML = 'Execute openFPGALoader: <font color="green">Done</font>';
+	//	} catch (error) {
+	//		console.error(errror);
+	//		span_soj_dl.innerHTML = 'Execute openFPGALoader: <font color="red">Fail</font>';
+	//	}
+	//};
 
-	reader.readAsArrayBuffer(file);
+	//if (!soj_name || (soj_name && soj_fileContent != null))
+	//	reader.readAsArrayBuffer(file);
+	var fileContent = null;
+	console.log(file);
+	if (file) {
+		await readBinaryFileFromHost(file).then(uint8Array => {
+			if (uint8Array) {
+				fileContent = uint8Array;
+			} else {
+				console.log("error");
+			}
+		});
+		console.log(fileContent);
+	}
+	if (!soj_name || (soj_name && soj_fileContent != null)) {
+	}
 });
 
 // Handle program button click
@@ -376,6 +408,27 @@ async function readBinaryFileFromUrl(url) {
         console.error('Error reading file:', error);
         return null;
     }
+}
+
+function readBinaryFileFromHost(file) {
+	return new Promise((resolve, reject) => {
+		var reader = new FileReader();
+
+		reader.onload = function (evt) {
+			resolve(new Uint8Array(evt.target.result));
+		};
+
+		reader.onerror = function (evt) {
+			reject("File reading failed");
+		};
+
+		try {
+			reader.readAsArrayBuffer(file);
+		} catch (error) {
+			console.error('Error reading file:', error);
+			return null;
+		}
+	});
 }
 
 // Handle device disconnection
