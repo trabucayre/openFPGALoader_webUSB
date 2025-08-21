@@ -38,29 +38,6 @@ EMCC_FLAGS=" \
 
 cd $(dirname $0)
 
-check_dependencies() {
-	deps=""
-	ret=$(dpkg -l | grep ccache)
-	if [[ "x${ret}x" == "xx" ]]; then
-		deps="ccache"
-	fi
-	ret=$(dpkg -l | grep nodejs)
-	if [[ "x${ret}x" == "xx" ]]; then
-		deps="$deps nodejs"
-	fi
-	ret=$(dpkg -l | grep npm)
-	if [[ "x${ret}x" == "xx" ]]; then
-		deps="$deps npm"
-	fi
-
-	if [[ "x${deps}x" == "xx" ]]; then
-		echo "No missing dependencies"
-	else
-		echo "sudo apt install -y $deps"
-		sudo apt install -y $deps
-	fi
-}
-
 # check if everything must be build or only one step.
 build_zlib="false"
 build_libusb="false"
@@ -101,8 +78,6 @@ else
     fi
 fi
 
-check_dependencies
-
 # EMSDK
 
 EMSDK_VERSION="3.1.51"
@@ -115,6 +90,10 @@ export PKG_CONFIG_PATH=$(pwd)/prefix/lib/pkgconfig
 # zlib
 
 if [[ $build_zlib == "true" ]]; then
+	echo ""
+	echo "Building ZLIB..."
+	echo "----------------"
+	echo ""
 	emcmake cmake -S zlib-src -B zlib-build $CMAKE_DEF_OPTS \
 	    -DINSTALL_PKGCONFIG_DIR=$(pwd)/prefix/lib/pkgconfig \
 		-DZLIB_BUILD_EXAMPLES=OFF \
@@ -129,24 +108,32 @@ fi
 # libusb
 
 if [[ $build_libusb == "true" ]]; then
+	echo ""
+	echo "Building libusb..."
+	echo "------------------"
+	echo ""
 	[ -e ./libusb-src/configure ] || (
 	    cd ./libusb-src &&
 	    ./bootstrap.sh)
-	[ -e ./libusb-build/Makefile ] || (
-	    mkdir -p libusb-build &&
-	    cd ./libusb-build &&
-	    emconfigure ../libusb-src/configure \
-	        CFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
-	        CPPFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
-	        --host=wasm32-emscripten \
-			--disable-shared \
-	        --prefix=$(realpath $(pwd)/../prefix))
+	[ -e ./libusb-build/Makefile ] || mkdir -p libusb-build
+	pushd ./libusb-build
+	emconfigure ../libusb-src/configure \
+	    CFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
+	    CPPFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
+	    --host=wasm32-emscripten \
+		--disable-shared \
+	    --prefix=$(realpath $(pwd)/../prefix)
+	popd
 	emmake make -C libusb-build install -j16
 fi
 
 # libftdi
 
 if [[ $build_libftdi == "true" ]]; then
+	echo ""
+	echo "Building libFTDI..."
+	echo "-------------------"
+	echo ""
 	emcmake cmake -S libftdi-src -B libftdi-build $CMAKE_DEF_OPTS \
 	    -DCMAKE_INSTALL_LIBDIR="$(pwd)/prefix/lib" \
 	    -DLIBUSB_INCLUDE_DIR="$(pwd)/prefix/include/libusb-1.0" \
@@ -160,6 +147,10 @@ fi
 # openFPGALoader
 
 if [[ $build_openfpgaloader == "true" ]]; then
+	echo ""
+	echo "Building openFPGALoader..."
+	echo "--------------------------"
+	echo ""
 	if [[ -e ./openFPGALoader ]]; then
 		pushd openFPGALoader
 		git pull
@@ -177,22 +168,24 @@ fi
 
 # Install
 
-mkdir -p npmjs/gen
+if [[ -e openFPGALoader-build ]]; then
+	mkdir -p npmjs/gen
 
-cp openFPGALoader-build/openFPGALoader.* npmjs/gen
-source emsdk/emsdk_env.sh
-pushd npmjs
-node prepare.mjs
-npm install
-npm run build
+	cp openFPGALoader-build/openFPGALoader.* npmjs/gen
+	source emsdk/emsdk_env.sh
+	pushd npmjs
+	node prepare.mjs
+	npm install
+	npm run build
 
-mkdir -p dist/
-npm pack --pack-destination=dist/
-popd
-cp npmjs/gen/bundle.js html/
-cp npmjs/gen/openFPGALoader.wasm html/
+	mkdir -p dist/
+	npm pack --pack-destination=dist/
+	popd
+	cp npmjs/gen/bundle.js html/
+	cp npmjs/gen/openFPGALoader.wasm html/
 
-# SpiOverJtag bitstreams
-[[ -e ./html/spiOverJtag ]] || mkdir html/spiOverJtag
-cp openFPGALoader/spiOverJtag/*.gz html/spiOverJtag
-cp openFPGALoader-build/*.gz html/spiOverJtag
+	# SpiOverJtag bitstreams
+	[[ -e ./html/spiOverJtag ]] || mkdir html/spiOverJtag
+	cp openFPGALoader/spiOverJtag/*.gz html/spiOverJtag
+	cp openFPGALoader-build/*.gz html/spiOverJtag
+fi
