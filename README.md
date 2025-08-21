@@ -61,6 +61,21 @@ This script builds the libraries required by openFPGALoader as well as openFPGAL
 - Running `./build.sh openfpgaloader` will always update **openFPGALoader** to the latest commit.
 - The deploy step runs only if **openFPGALoader** has been successfully built at least once.
 
+### Standalone python server
+
+The python script *html/run.py* is a minimal web-server.
+
+Prerequisites:
+```bash
+apt install python3-cryptography
+```
+
+Uses:
+```bash
+cd html
+./run.py
+```
+
 ### Prepare Web Server
 
 *TBD*
