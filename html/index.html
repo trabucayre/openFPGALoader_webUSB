@@ -33,15 +33,15 @@ if (crossOriginIsolated) {
 		<li>Automatic mode allows users to select:
 			<ul>
 				<li>target board and/or cable via a list</li>
-				<li>bitstream destination (SRAM or Flash (not supported for Xilinx/Altera/Efinix)). For Flash access a verification
+				<li>bitstream destination (SRAM or Flash). For Flash access a verification
 					step may be optionaly performed after write.</li>
 				<li>the bistream file</li>
 			</ul>
 		</li>
 	</ul>
 	</p>
-	<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
-		<tr><td style="text-align:left;">
+	<table style="border-collapse: collapse; width: 100%;white-space: nowrap;" border=0>
+		<tr><td style="text-align:left; width:auto; white-space: nowrap">
 		<fieldset style="width:0px">
 			<legend>OpenFPGALoader manual operations</legend>
 			<!--<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">-->
@@ -64,11 +64,11 @@ if (crossOriginIsolated) {
 		</fieldset>
 		</br>
 
-		<div>
+		<!--<div>-->
 		<fieldset style="width:0px">
 			<legend>OpenFPGALoader automatic operations:</legend>
 			<!--<table border="0" style=" border-collapse: collapse;  border: 1px solid black;">-->
-			<table style="border-collapse: collapse;">
+			<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
 				<tr><td>
 				<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">
 					<tr>
@@ -111,16 +111,16 @@ if (crossOriginIsolated) {
 				</td></tr>
 			</table>
 		</fieldset>
-	</td><!-- end of openFPGALoader forms -->
-	<td>
-		<div id="oflOpStatus" style="align:left"></div>
-	</tr><td>
+		<!--</div>-->
+		</td><!-- end of openFPGALoader forms -->
+		<td style="text-align:left;vertical-align:top;width: 100%">
+			<div><b>openFPGALoader Command Line: </b><span id="oflCmdManual"></span></div></br>
+			<div id="oflOpStatus" style="align:left"></div>
+		</tr><td>
 	</table>
 
-	</div>
 	</br>
 
-	<div id="oflCmdManual"></div>
 	<div id="USBStatus">Status: Not connected</div>
 	<div id="OFLStatus">Program status: NA</div>
 	<div id="demo">Status: Not connected</div>
