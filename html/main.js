@@ -29,7 +29,6 @@ catch (err) {
 	//demo2.textContent = '<span style="color:red">error ' + err.message + '</span>';
 	demo2.appendChild(span1);
 	demo2.appendChild(span2);
-	console.log("plop");
 }
 
 const detectButton  = document.getElementById('detectButton');
@@ -45,6 +44,7 @@ async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
 	let lines       = [];
 	let lines_err   = [];
 	const div_log   = document.getElementById(div_id);
+	var ret_val     = true;
 
 	OFLStatus.innerHTML = 'Status: Loading bitstream...';
 
@@ -53,11 +53,15 @@ async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
 		device = await navigator.usb.requestDevice({ filters: [] });
 	}
 	div_log.innerHTML = "";
+	console.log("plop");
 
 	try {
 		const response = await runOpenFPGALoader(args, fileIn,
 			{
-				stdout:lineBuffered((line) => lines.push(line)),
+				stdout:lineBuffered((line) => {
+					lines.push(line);
+					console.log(line);
+				}),
 				stderr:lineBuffered((line) => lines_err.push(line)),
 				decodeASCII: true
 			}
@@ -70,12 +74,13 @@ async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
 		});
 		OFLStatus.innerHTML = 'Status: FPGA programmed successfully!';
 	} catch(error) {
-        console.error(error);
+	    console.error(error);
 		OFLStatus.textContent = `Status: Error programming - ${error.message}`;
+		ret_val = false;
 	}
 	console.log(lines);
 	console.log(lines_err);
-	return lines;
+	return [ret_val, lines];
 }
 
 async function fill_cables() {
@@ -124,17 +129,23 @@ async function fill_boards() {
 
 document.getElementById('programButtonManual').addEventListener('click', async function () {
 	console.log(document.getElementById("fileInput").files[0])
-	let file     = document.getElementById("fileInput").files[0];
-	var filename = null;
-	let reader   = new FileReader();
-	var cmd      = ["-c", "digilent", "-f", "--detect"];
-	//var cmd        = ofl_cmd.value.split(' ');
-	console.log("hello");
+	let file      = document.getElementById("fileInput").files[0];
+	var filename  = null;
+	let reader    = new FileReader();
+	const ofl_cmd = document.getElementById("ofl_cmd")
+	var cmd       = ofl_cmd.value.split(' ');
+	//cmd.push("--quiet");
 
-	//cmd.push("--fpga-part");
-	//cmd.push("xc7a35tcsg324");
-	cmd.push("--board");
-	cmd.push("arty");
+	if (false) {
+		cmd = ["-c", "digilent"];
+		cmd.push("-f")
+
+		//cmd.push("--detect");
+		//cmd.push("--fpga-part");
+		//cmd.push("xc7a35tcsg324");
+		cmd.push("--board");
+		cmd.push("cmoda7_35t");
+	}
 
 	// Clear status area.
 	oflOpStatus.innerHTML = "";
@@ -189,56 +200,60 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	} else {
 		span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <font color="blue">Not required</font>';
 	}
+	oflOpStatus.innerHTML += "</br>";
 
-	//reader.onload = function (event) {
-	//	const binaryData  = new Uint8Array(event.target.result);
-	//	const fileContent = binaryData;
-	//	const ofl_cmd     = document.getElementById("ofl_cmd")
-	//	var fileData      = {};
-	//	if (soj_name == "") {
-	//		fileData      = {[filename]: fileContent};
-	//	} else {
-	//		console.log(soj_fileContent);
-	//		fileData      = {
-	//			[filename]: fileContent,
-	//			[soj_name]: soj_fileContent,
-	//		};
-	//		cmd.push("--bridge");
-	//		cmd.push(soj_name);
-	//	}
-	//	cmd.push("--quiet");
-	//	cmd.push(filename);
-	//
-	//	var span_ofl_exec = document.createElement("span_ofl_exec");
-	//	oflOpStatus.appendChild(span_ofl_exec);
-	//	span_soj_dl.innerHTML = 'Execute openFPGALoader:';
-	//
-	//	document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
-	//	try {
-	//		ofl_exec(cmd, "demo", fileData, true);
-	//		span_soj_dl.innerHTML = 'Execute openFPGALoader: <font color="green">Done</font>';
-	//	} catch (error) {
-	//		console.error(errror);
-	//		span_soj_dl.innerHTML = 'Execute openFPGALoader: <font color="red">Fail</font>';
-	//	}
-	//};
-
-	//if (!soj_name || (soj_name && soj_fileContent != null))
-	//	reader.readAsArrayBuffer(file);
+	/* Get Bitstream from host computer */
 	var fileContent = null;
-	console.log(file);
+	console.log(file.name);
 	if (file) {
+		filename = file.name;
+		var span_bit_dl = document.createElement("span_bit_dl");
+		oflOpStatus.appendChild(span_bit_dl);
+		span_bit_dl.innerHTML = 'Fetch ' + filename + "Bitstream:";
 		await readBinaryFileFromHost(file).then(uint8Array => {
 			if (uint8Array) {
+				span_bit_dl.innerHTML += ' <font color="green">Done</font>';
 				fileContent = uint8Array;
 			} else {
 				console.log("error");
+				span_bit_dl.innerHTML += ' <font color="red">Fail</font>';
+				return;
 			}
 		});
-		console.log(fileContent);
 	}
-	if (!soj_name || (soj_name && soj_fileContent != null)) {
+	oflOpStatus.innerHTML += "</br>";
+
+	/* Prepare openFPGALoader call/cmd line */
+	var fileData  = {};
+
+	if (soj_name && soj_fileContent != null) {
+		fileData[soj_name] = soj_fileContent;
+		cmd.push("--bridge");
+		cmd.push(soj_name);
 	}
+	if (filename && fileContent != null) {
+		fileData[filename] = fileContent;
+		cmd.push(filename);
+	}
+	console.log(fileData);
+
+	/* openFPGALoader run */
+	console.log("start");
+	var span_ofl_exec = document.createElement("span_ofl_exec");
+	oflOpStatus.appendChild(span_ofl_exec);
+	span_ofl_exec.innerHTML = 'Execute openFPGALoader:';
+
+	document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
+	var ret_ofl = await ofl_exec(cmd, "demo", fileData, true);
+	const success = ret_ofl[0];
+	const lines  = ret_ofl[1];
+		if (success) {
+			span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="green">Done</font>';
+		} else {
+			span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="red">Fail</font>';
+		}
+
+	console.log("end");
 });
 
 // Handle program button click
@@ -351,7 +366,9 @@ async function detectSpiOverJtagName(cmd_line)
 	if (ret_status != 1 && ret_status != 2) {
 		// Executes --detect command to have manufacturer name and
 		// FPGA Model
-		const lines        = await ofl_exec(search_cmd, "demo", [], false);
+		const ret     = await ofl_exec(search_cmd, "demo", [], false);
+		const success = ret[0]; // FIXME: handle failure
+		const lines   = ret[1];
 
 		// Extracts vendor and Model
 		const vendor_index = lines.findIndex(findManufacturer);
