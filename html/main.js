@@ -2,41 +2,23 @@
 import { runOpenFPGALoader     } from './bundle.js';
 import { lineBuffered, chunked } from 'https://cdn.jsdelivr.net/npm/@yowasp/runtime/lib/util.js';
 
+// List of supported boards
 var list_boards = {};
 
+// Prepare cable_select select item
 await fill_cables();
+// Prepare board_select select item
 await fill_boards();
 
-const demo = document.getElementById('demo');
-const demo2 = document.getElementById('demo2');
-
-try {
-	const response = await runYosys(["--version"]);
-    const data = await response.json();
-	demo.textcontent = '<font color="green">' + data + '</font>';
-	demo2.textcontent = '<font color="green">' + data + '</font>';
-	console.log(data);
-}
-catch (err) {
-	var span1 = document.createElement("mess1");
-	span1.innerHTML = "</br>Truc";
-	span1.style.color = "black";
-	var span2 = document.createElement("mess2");
-	span2.innerHTML = "Error " + err.message;
-	span2.style.color = "red";
-
-	demo.innerHTML = 'Plop: <font color="red">error ' + err.message + ' blabla</font>';
-	//demo2.textContent = '<span style="color:red">error ' + err.message + '</span>';
-	demo2.appendChild(span1);
-	demo2.appendChild(span2);
-}
-
+const demo          = document.getElementById('demo');
 const detectButton  = document.getElementById('detectButton');
 const connectButton = document.getElementById('connectButton');
 const programButton = document.getElementById('programButton');
 const select_cable  = document.getElementById('cable_select');
 const USBStatus     = document.getElementById('USBStatus');
 const oflOpStatus   = document.getElementById('oflOpStatus');
+
+// USB device object
 let device          = null;
 
 async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
@@ -122,18 +104,22 @@ async function fill_boards() {
 	    select_board.append(opt);
 		list_boards[board] = {"cable": line_s[1], "fpga_part": line_s[2]};
 	});
-	//for (const [key, value] of Object.entries(list_boards)) {
-	//	console.log("%s %s %s", key, value["cable"], value["fpga_part"]);
-	//}
 }
 
 document.getElementById('programButtonManual').addEventListener('click', async function () {
 	console.log(document.getElementById("fileInput").files[0])
+	// User bitstream file and name
 	let file      = document.getElementById("fileInput").files[0];
 	var filename  = null;
-	let reader    = new FileReader();
+
+	// spiOverJtag and User bitstream content.
+	var soj_fileContent = null;   // SpiOverJtag bitstream content
+
+	// openFPGALoader command line
 	const ofl_cmd = document.getElementById("ofl_cmd")
 	var cmd       = ofl_cmd.value.split(' ');
+	var fileContent     = null;   // user bitstream content
+
 	//cmd.push("--quiet");
 
 	if (false) {
@@ -154,10 +140,10 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	// if so, detectSpiOverJtagName will return spiOverJtag bitstream
 	// name, otherwise ""
 	const ret           = await detectSpiOverJtagName(cmd);
-	var soj_name        = ret[1];
-	const ret_code      = ret[0];
-	var soj_fileContent = null;
+	const soj_name      = ret[1]; // spiOverJtag bitstream name
+	const ret_code      = ret[0]; // spiOverJtag detect ret code
 	// FIXME: todo something with return code.
+
 	var detect_status = "";
 	var mess          = "SpiOverJtag Bridge: ";
 	if (ret_code < 0) {
@@ -180,7 +166,6 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	}
 	console.log(detect_status);
 	oflOpStatus.innerHTML += mess + "</br>";
-	//soj_name +=".t"
 	var span_soj_dl = document.createElement("span_soj_dl");
 	oflOpStatus.appendChild(span_soj_dl);
 	if (soj_name) {
@@ -203,7 +188,6 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	oflOpStatus.innerHTML += "</br>";
 
 	/* Get Bitstream from host computer */
-	var fileContent = null;
 	console.log(file.name);
 	if (file) {
 		filename = file.name;
@@ -244,14 +228,14 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	span_ofl_exec.innerHTML = 'Execute openFPGALoader:';
 
 	document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
-	var ret_ofl = await ofl_exec(cmd, "demo", fileData, true);
+	var ret_ofl   = await ofl_exec(cmd, "demo", fileData, true);
 	const success = ret_ofl[0];
-	const lines  = ret_ofl[1];
-		if (success) {
-			span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="green">Done</font>';
-		} else {
-			span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="red">Fail</font>';
-		}
+	const lines   = ret_ofl[1];
+	if (success) {
+		span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="green">Done</font>';
+	} else {
+		span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="red">Fail</font>';
+	}
 
 	console.log("end");
 });
@@ -413,6 +397,7 @@ function findModel(l) {
 	return l.includes("model");
 }
 
+// Fetch spiOverJtag bitstream from the server
 async function readBinaryFileFromUrl(url) {
     try {
         const response = await fetch(url);
@@ -427,6 +412,7 @@ async function readBinaryFileFromUrl(url) {
     }
 }
 
+// Fetch the bitstream from the host
 function readBinaryFileFromHost(file) {
 	return new Promise((resolve, reject) => {
 		var reader = new FileReader();
@@ -448,11 +434,15 @@ function readBinaryFileFromHost(file) {
 	});
 }
 
+/* -------------------------------------- */
+/* USB Aspect (connect/disconnect events) */
+/* -------------------------------------- */
+
 // Handle device disconnection
 navigator.usb.addEventListener('disconnect', (event) => {
 	console.log("disconnect");
     if (event.device === device) {
-        USBStatus.textContent = 'Status: Device disconnected';
+        USBStatus.textContent = 'USB Status: Device disconnected';
         device = null;
     }
 });
@@ -461,7 +451,7 @@ navigator.usb.addEventListener('connect', (event) => {
 	console.log("connect");
 	//if (event.device === device) {
 //    if (!device) {
-        USBStatus.textContent = 'Status: Device connected';
+        USBStatus.textContent = 'USB Status: Device connected';
 //        programButton.disabled = true;
 //        connectButton.disabled = false;
 //        device = event.device;
