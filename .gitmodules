@@ -1,6 +1,6 @@
 [submodule "libusb-src"]
 	path = libusb-src
-	url = https://github.com/sylefeb/libusb.git
+	url = https://github.com/libusb/libusb.git
 [submodule "emsdk"]
 	path = emsdk
 	url = https://github.com/emscripten-core/emsdk.git
