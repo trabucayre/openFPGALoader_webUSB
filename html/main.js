@@ -189,11 +189,11 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	oflOpStatus.innerHTML += "</br>";
 
 	/* Get Bitstream from host computer */
+	var span_bit_dl = document.createElement("span_bit_dl");
+	oflOpStatus.appendChild(span_bit_dl);
 	if (file) {
 		console.log(file.name);
 		filename = file.name;
-		var span_bit_dl = document.createElement("span_bit_dl");
-		oflOpStatus.appendChild(span_bit_dl);
 		span_bit_dl.innerHTML = 'Fetch ' + filename + "Bitstream:";
 		await readBinaryFileFromHost(file).then(uint8Array => {
 			if (uint8Array) {
@@ -205,6 +205,8 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 				return;
 			}
 		});
+	} else {
+		span_bit_dl.innerHTML = 'Fetch Bitstream: <font color="blue">Not required</font>';
 	}
 	oflOpStatus.innerHTML += "</br>";
 
