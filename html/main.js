@@ -84,6 +84,7 @@ async function fill_cables() {
 	    select_cable.append(opt);
 	});
 }
+
 async function fill_boards() {
 	const select_board = document.getElementById('board_select');
 	let lines = [];
@@ -188,8 +189,8 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	oflOpStatus.innerHTML += "</br>";
 
 	/* Get Bitstream from host computer */
-	console.log(file.name);
 	if (file) {
+		console.log(file.name);
 		filename = file.name;
 		var span_bit_dl = document.createElement("span_bit_dl");
 		oflOpStatus.appendChild(span_bit_dl);
