@@ -43,24 +43,18 @@ async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
 				stdout:lineBuffered((line) => {
 					lines.push(line);
 					console.log(line);
+					div_log.innerHTML += line + "</br>\n";
 				}),
 				stderr:lineBuffered((line) => lines_err.push(line)),
 				decodeASCII: true
 			}
 		);
-		lines.map((line, i) => {
-			if (verbose) {
-				console.log(line);
-			}
-			div_log.innerHTML += line + "</br>\n";
-		});
 		OFLStatus.innerHTML = 'Status: FPGA programmed successfully!';
 	} catch(error) {
 	    console.error(error);
 		OFLStatus.textContent = `Status: Error programming - ${error.message}`;
 		ret_val = false;
 	}
-	console.log(lines);
 	console.log(lines_err);
 	return [ret_val, lines];
 }
