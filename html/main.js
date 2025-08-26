@@ -22,8 +22,8 @@ const oflStatus     = document.getElementById('OFLStatus');
 let device          = null;
 
 async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
-	let lines       = [];
-	var ret_val     = true;
+	let lines   = [];
+	var ret_val = true;
 
 	if (!device) {
 		console.log("device null");
@@ -39,6 +39,8 @@ async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
 	}
 	div_log.innerHTML = "";
 
+	/* Get current time to compute duration */
+	const startTime = Date.now();
 	try {
 		const response = await runOpenFPGALoader(args, fileIn,
 			{
@@ -59,6 +61,12 @@ async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
 	    console.error("a" + error + "b");
 		ret_val = false;
 	}
+
+	/* Compute and display execution duration */
+	const endTime = Date.now();
+	const elapsedTime = endTime - startTime;
+	console.log(`Execution time: ${elapsedTime} milliseconds`);
+
 	return [ret_val, lines];
 }
 
