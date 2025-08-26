@@ -10,32 +10,34 @@ await fill_cables();
 // Prepare board_select select item
 await fill_boards();
 
-const demo          = document.getElementById('demo');
 const detectButton  = document.getElementById('detectButton');
 const connectButton = document.getElementById('connectButton');
 const programButton = document.getElementById('programButton');
 const select_cable  = document.getElementById('cable_select');
 const USBStatus     = document.getElementById('USBStatus');
 const oflOpStatus   = document.getElementById('oflOpStatus');
+const oflStatus     = document.getElementById('OFLStatus');
 
 // USB device object
 let device          = null;
 
-async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
-	const OFLStatus = document.getElementById('OFLStatus');
+async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
 	let lines       = [];
-	let lines_err   = [];
-	const div_log   = document.getElementById(div_id);
 	var ret_val     = true;
-
-	OFLStatus.innerHTML = 'Status: Loading bitstream...';
 
 	if (!device) {
 		console.log("device null");
-		device = await navigator.usb.requestDevice({ filters: [] });
+		await navigator.usb.requestDevice({ filters: [] })
+			.then((usbDevice) => {
+				device = usbDevice;
+				USBStatus.innerHTML = "USB Status: <font color='green'>Connected</font>";
+			})
+			.catch((e) => {
+				device = null;
+				USBStatus.innerHTML = "USB Status: <font color='red'>Error ${e} </font>";
+			});
 	}
 	div_log.innerHTML = "";
-	console.log("plop");
 
 	try {
 		const response = await runOpenFPGALoader(args, fileIn,
@@ -45,17 +47,18 @@ async function ofl_exec(args, div_id, fileIn={}, verbose=true) {
 					console.log(line);
 					div_log.innerHTML += line + "</br>\n";
 				}),
-				stderr:lineBuffered((line) => lines_err.push(line)),
+				stderr:lineBuffered((line) => {
+					lines.push(line)
+					console.log(line);
+					div_log.innerHTML += line + "</br>\n";
+				}),
 				decodeASCII: true
 			}
 		);
-		OFLStatus.innerHTML = 'Status: FPGA programmed successfully!';
 	} catch(error) {
-	    console.error(error);
-		OFLStatus.textContent = `Status: Error programming - ${error.message}`;
+	    console.error("a" + error + "b");
 		ret_val = false;
 	}
-	console.log(lines_err);
 	return [ret_val, lines];
 }
 
@@ -225,7 +228,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	span_ofl_exec.innerHTML = 'Execute openFPGALoader:';
 
 	document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
-	var ret_ofl   = await ofl_exec(cmd, "demo", fileData, true);
+	var ret_ofl   = await ofl_exec(cmd, oflStatus, fileData, true);
 	const success = ret_ofl[0];
 	const lines   = ret_ofl[1];
 	if (success) {
@@ -272,7 +275,7 @@ programButton.addEventListener('click', async () => {
 		cmd.push(filename);
 		document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
 		try {
-			ofl_exec(cmd, "demo", fileData, true);
+			ofl_exec(cmd, "OFLStatus", fileData, true);
 		} catch (error) {
 			console.error(errror);
 		}
@@ -347,7 +350,7 @@ async function detectSpiOverJtagName(cmd_line)
 	if (ret_status != 1 && ret_status != 2) {
 		// Executes --detect command to have manufacturer name and
 		// FPGA Model
-		const ret     = await ofl_exec(search_cmd, "demo", [], false);
+		const ret     = await ofl_exec(search_cmd, oflStatus, [], false);
 		const success = ret[0]; // FIXME: handle failure
 		const lines   = ret[1];
 
@@ -438,19 +441,12 @@ function readBinaryFileFromHost(file) {
 // Handle device disconnection
 navigator.usb.addEventListener('disconnect', (event) => {
 	console.log("disconnect");
-    if (event.device === device) {
-        USBStatus.textContent = 'USB Status: Device disconnected';
-        device = null;
-    }
+	if (event.device === device) {
+	    USBStatus.innerHTML = 'USB Status: <font color="blue">Device disconnected</font>';
+	}
 });
 
 navigator.usb.addEventListener('connect', (event) => {
 	console.log("connect");
-	//if (event.device === device) {
-//    if (!device) {
-        USBStatus.textContent = 'USB Status: Device connected';
-//        programButton.disabled = true;
-//        connectButton.disabled = false;
-//        device = event.device;
-//    }
+	USBStatus.innerHTML = 'USB Status: <font color="green">connected</font>';
 });
