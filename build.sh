@@ -12,9 +12,9 @@ export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 
 
 CMAKE_DEF_OPTS=" \
-	-DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=$(pwd)/prefix \
 	-DCMAKE_C_COMPILER_LAUNCHER=ccache \
+	-DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
 	-DCMAKE_BUILD_TYPE=MinSizeRel"
 
 EMCC_FLAGS=" \
@@ -101,7 +101,7 @@ if [[ $build_zlib == "true" ]]; then
 		-DZLIB_BUILD_SHARED=OFF \
 		-DZLIB_BUILD_STATIC=ON \
 		-DZLIB_BUILD_MINIZIP=OFF \
-	    -DCMAKE_C_FLAGS="-O2 -fexceptions -no-pthread"
+	    -DCMAKE_C_FLAGS="-fexceptions -pthread"
 	emmake make -C zlib-build install VERBOSE=1 -j$(nproc)
 fi
 
@@ -117,14 +117,12 @@ if [[ $build_libusb == "true" ]]; then
 	    ./bootstrap.sh)
 	[ -e ./libusb-build/Makefile ] || mkdir -p libusb-build
 	pushd ./libusb-build
+	CFLAGS="-Os -pthread -fexceptions" \
 	emconfigure ../libusb-src/configure \
-	    CFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
-	    CPPFLAGS="-O2 -fexceptions -DNO_PTHREAD -no-pthread -Wall" \
 	    --host=wasm32-emscripten \
-		--disable-shared \
 	    --prefix=$(realpath $(pwd)/../prefix)
 	popd
-	emmake make -C libusb-build install -j16
+	emmake make -C libusb-build install VERBOSE=1 -j$(nproc)
 fi
 
 # libftdi
@@ -138,10 +136,10 @@ if [[ $build_libftdi == "true" ]]; then
 	    -DCMAKE_INSTALL_LIBDIR="$(pwd)/prefix/lib" \
 	    -DLIBUSB_INCLUDE_DIR="$(pwd)/prefix/include/libusb-1.0" \
 	    -DLIBUSB_LIBRARIES="-L$(pwd)/prefix/lib -lusb-1.0" \
-	    -DCMAKE_C_FLAGS="-O2 -fexceptions -no-pthread" \
+	    -DCMAKE_C_FLAGS="-pthread -fexceptions" \
 	    -DFTDI_EEPROM=OFF \
 	    -DEXAMPLES=OFF
-	emmake make -C libftdi-build install VERBOSE=1 -j16
+	emmake make -C libftdi-build install VERBOSE=1 -j$(nproc)
 fi
 
 # openFPGALoader
@@ -160,8 +158,8 @@ if [[ $build_openfpgaloader == "true" ]]; then
 	fi
 	[ -e ./openFPGALoader-build ] && rm -rf openFPGALoader-build
 	emcmake cmake -S openFPGALoader -B openFPGALoader-build \
-	    -DCMAKE_CXX_FLAGS="-fexceptions" \
-	    -DCMAKE_EXE_LINKER_FLAGS="-O2 -no-pthread -lembind ${EMCC_FLAGS}" \
+	    -DCMAKE_CXX_FLAGS="-pthread -fexceptions" \
+	    -DCMAKE_EXE_LINKER_FLAGS="-lembind ${EMCC_FLAGS}" \
 	    -DCMAKE_EXECUTABLE_SUFFIX_CXX=".mjs"
 	emmake make -C openFPGALoader-build VERBOSE=1 -j$(nproc)
 fi
