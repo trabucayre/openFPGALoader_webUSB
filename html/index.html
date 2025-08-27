@@ -1,144 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<!-- Cross-Origin-Opener-Policy: same-origin
-	Cross-Origin-Embedder-Policy: require-corp
-	These are new security requirements for using SharedArrayBuffer.
-
-	You can check in code if cross origin isolation is enabled:
-
-	if (crossOriginIsolated) {
-		// SharedArrayBuffer is available
-	} -->
-	<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
-	<meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-	<meta http-equiv="Pragma" content="no-cache">
-	<meta http-equiv="Expires" content="0">
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
 	<title>openFPGALoader Web Interface</title>
+
+	<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+	<meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+	
+	<link rel="stylesheet" href="style_ofl.css">
 
 </head>
 <body>
 	<script type="module" src="main.js"></script>
-	<!--<script type="text/javascript">
-	</script>-->
 
 	<h1>openFPGALoader WEB interface</h1>
 
 	<div class="notice_section">
-		<h2>Note: for Linux users, ftdi_sio driver must be unloaded with sudo modprobe -r ftdi_sio</h2>
-		<h2>Note: Google Chrome must be used: USB access is not supported by firefox</h2>
+		<h2>Important Notes:</h2>
+		<ul>
+			<li>For Linux users, the `ftdi_sio` driver must be unloaded: `sudo modprobe -r ftdi_sio`</li>
+			<li>Google Chrome must be used, as USB access is not supported by Firefox.</li>
+		</ul>
 	</div>
 
 	<div class="description">
-		<p>
-		This page offers two ways to program an FPGA directly from a navigator:
-		</p>
+		<p>This page offers two ways to program an FPGA directly from a web browser:</p>
 		<ul>
-			<li>Manual mode requires openFPGALoader's argument exactly as done via a terminal</li>
-			<li>Automatic mode allows users to select:
+			<li>**Manual Mode**: Requires openFPGALoader's arguments entered exactly as you would on a terminal.</li>
+			<li>**Automatic Mode**: A guided process where you can select:
 				<ul>
-					<li>target board and/or cable via a list</li>
-					<li>bitstream destination (SRAM or Flash). For Flash access a verification
-						step may be optionally performed after write.</li>
-					<li>the bitstream file</li>
+					<li>The target board and/or cable from a list.</li>
+					<li>The bitstream destination (SRAM or Flash). A verification step can be optionally performed after writing to Flash.</li>
+					<li>The bitstream file to be programmed.</li>
 				</ul>
 			</li>
 		</ul>
 	</div>
+	
+	<div class="main-container">
+		<div class="controls-column">
+			<fieldset>
+				<legend>Manual Operations</legend>
+				<div class="form-group">
+					<label for="ofl_cmd">Command line args:</label>
+					<input type="text" id="ofl_cmd" placeholder="e.g., -c ft2232 -b ulx3s" />
+				</div>
+				<div class="form-group">
+					<label for="fileInput">Bitstream file:</label>
+					<input type="file" id="fileInput">
+					<div id="fileContents"></div>
+				</div>
+				<button id="programButtonManual">Program FPGA</button>
+			</fieldset>
 
-	<table style="border-collapse: collapse; width: 100%; height:100%; white-space: nowrap;" border=1>
-		<tr style="height=100%"><td style="text-align:left; width:auto; white-space:nowrap;">
-		<fieldset style="width:0px">
-			<legend>OpenFPGALoader manual operations</legend>
-			<!--<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">-->
-			<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
-				<tr>
-					<td style="text-align=right;"><label for="ofl_cmd">Command line args:</label></td>
-					<td><input type="text" id="ofl_cmd" style="width:100%; box-sizing:border-box;" /></td>
-				</tr>
-				<tr>
-					<td style="text-align:right;"><label for="fileInput">Bitstream:</label></td>
-					<td>
-						<input type="file" id="fileInput">
-						<div id="fileContents"></div>
-					</td>
-				</tr>
-				<tr>
-					<td style="text-align:center;" colspan=2><button id="programButtonManual">Program FPGA</button></td>
-				</tr>
-			</table>
-		</fieldset>
-		</br>
-
-		<!--<div>-->
-		<fieldset style="width:0px">
-			<legend>OpenFPGALoader automatic operations:</legend>
-			<!--<table border="0" style=" border-collapse: collapse;  border: 1px solid black;">-->
-			<table style="border-collapse: collapse; width:100%;white-space:nowrap;">
-				<tr><td>
-				<table border="1" style=" border-collapse: collapse;  border: 1px solid black;">
-					<tr>
-						<td>
-							<label for="cable_select">Choose a cable:</label></br>
-							<select name="cable" id="cable_select">
-								<option value=0>Default</option>
-							</select>
-						</td>
-						<td>
-							<label for="board_select">Choose a board:</label></br>
-							<select name="board" id="board_select">
-								<option value=0>None</option>
-							</select>
-						</td>
-					</tr>
-				</table>
-				</td></tr>
-				<tr><td>
-					Target:
+			<fieldset>
+				<legend>Automatic Operations</legend>
+				<div class="form-group-flex">
 					<div>
-						<input type="radio" id="ofl_sram" name="ofl_mode" value="sram" checked />
-						<label for="ofl_sram">SRAM</label>
+						<label for="cable_select">Choose a cable:</label>
+						<select name="cable" id="cable_select">
+							<option value="0">Default</option>
+						</select>
 					</div>
 					<div>
-						<input type="radio" id="ofl_flash" name="ofl_mode" value="flash" />
-						<label for="ofl_flash">Flash</label>
+						<label for="board_select">Choose a board:</label>
+						<select name="board" id="board_select">
+							<option value="0">None</option>
+						</select>
 					</div>
-				</td></tr>
-				<tr><td>
-					<label for="ofl_verify">Verify</label>
+				</div>
+
+				<div class="form-group">
+					<p>Target Destination:</p>
+					<div class="radio-group">
+						<div>
+							<input type="radio" id="ofl_sram" name="ofl_mode" value="sram" checked />
+							<label for="ofl_sram">SRAM</label>
+						</div>
+						<div>
+							<input type="radio" id="ofl_flash" name="ofl_mode" value="flash" />
+							<label for="ofl_flash">Flash</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
 					<input type="checkbox" id="ofl_verify" name="ofl_verify" />
-				</td></tr>
-				<tr><td>
-					<label for="fileAutoInput">Bitstream:</label>
+					<label for="ofl_verify">Verify after write</label>
+				</div>
+				
+				<div class="form-group">
+					<label for="fileAutoInput">Bitstream file:</label>
 					<input type="file" id="fileAutoInput">
-				</td></tr>
-				<tr><td>
-					<button id="programButton">Program FPGA</button>
-				</td></tr>
-			</table>
-		</fieldset>
-		<!--</div>-->
-		</td><!-- end of openFPGALoader forms -->
-		<td style="text-align:left;vertical-align:top; width: 100%; height:100%; padding:0;">
-			<fieldset style="width:100%; height:100%; box-sizing:border-box; margin:0;">
-				<legend>Operations</legend>
-				<div><b>openFPGALoader Command Line: </b><span id="oflCmdManual"></span></div></br>
-				<div id="oflOpStatus" style="align:left"></div>
-			</fieldset>
-		</td><tr>
-		<tr style="height:100%;"><td colspan=2 style="text-align:left;vertical-align:top; width: 100%; height:100%; padding:0;">
-			<fieldset style="width:100%; height:100%; box-sizing:border-box; margin:0;">
-				<legend>openFPGALoader Logs.</legend>
-				<div id="OFLStatus"></div>
-			</fieldset>
-		</td></tr>
-	</table>
+				</div>
 
-	</br>
+				<button id="programButton">Program FPGA</button>
+			</fieldset>
+		</div>
+
+		<div class="logs-column">
+			<div><b>openFPGALoader Command Line: </b><span id="oflCmdManual"></span></div>
+			<fieldset>
+				<legend>Operation Status</legend>
+
+				<div id="oflOpStatus" class="log-area" tabindex="0"></div>
+			</fieldset>
+
+			<fieldset>
+				<legend>openFPGALoader Logs</legend>
+				<div id="OFLStatus" class="log-area" tabindex="0"></div>
+			</fieldset>
+		</div>
+	</div>
 
 	<div id="USBStatus">USB Status: Not connected</div>
 </body>
