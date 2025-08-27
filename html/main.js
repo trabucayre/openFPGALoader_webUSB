@@ -6,10 +6,6 @@ import { lineBuffered, chunked } from 'https://cdn.jsdelivr.net/npm/@yowasp/runt
 const list_boards = {};
 
 // DOM references
-const detectButton  = document.getElementById('detectButton');
-const connectButton = document.getElementById('connectButton');
-const programButton = document.getElementById('programButton');
-const select_cable  = document.getElementById('cable_select');
 const USBStatus     = document.getElementById('USBStatus');
 const oflOpStatus   = document.getElementById('oflOpStatus');
 const oflStatus     = document.getElementById('OFLStatus');
@@ -110,7 +106,7 @@ async function fill_cables() {
 		const mess = "Error filling cables: " + error;
 		console.error(mess);
 		oflStatus.innerHTML += '<span class="error"><font color="red">' + mess + '</font></span></br>\n';
-    }
+	}
 }
 
 async function fill_boards() {
@@ -141,32 +137,20 @@ async function fill_boards() {
 	}
 }
 
-// ------------------ Program Manual ------------------ //
-
-document.getElementById('programButtonManual').addEventListener('click', async function () {
-	// User bitstream file and name
-	const file    = document.getElementById("fileInput").files[0];
+async function perform_operation(file, cmd_line) {
 	var filename  = null;
-
 	// spiOverJtag and User bitstream content.
 	var soj_fileContent = null;   // SpiOverJtag bitstream content
+	var fileContent     = null;   // user bitstream content
 
-	// openFPGALoader command line
-	const ofl_cmd   = document.getElementById("ofl_cmd")
-	var cmd         = ofl_cmd.value.split(' ');
-	var fileContent = null;   // user bitstream content
-
-	//cmd.push("--quiet");
-
+	//cmd_line.push("--quiet");
 	if (false) {
-		cmd = ["-c", "digilent"];
-		cmd.push("-f")
+		cmd_line = ["-c", "digilent"];
+		cmd_line.push("-f")
 
-		//cmd.push("--detect");
-		//cmd.push("--fpga-part");
-		//cmd.push("xc7a35tcsg324");
-		cmd.push("--board");
-		cmd.push("cmoda7_35t");
+		//cmd_line.push("--detect");
+		//cmd_line.push("--fpga-part", "xc7a35tcsg324");
+		cmd_line.push("--board", "cmoda7_35t");
 	}
 
 	// Clear status area.
@@ -175,7 +159,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	// Detect if command if to flash a bitstream
 	// if so, detectSpiOverJtagName will return spiOverJtag bitstream
 	// name, otherwise ""
-	const ret      = await detectSpiOverJtagName(cmd);
+	const ret      = await detectSpiOverJtagName(cmd_line);
 	const soj_name = ret[1]; // spiOverJtag bitstream name
 	const ret_code = ret[0]; // spiOverJtag detect ret code
 	// FIXME: todo something with return code.
@@ -229,7 +213,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	if (file) {
 		console.log(file.name);
 		filename = file.name;
-		span_bit_dl.innerHTML = 'Fetch ' + filename + "Bitstream:";
+		span_bit_dl.innerHTML = 'Fetch ' + filename + " Bitstream:";
 		await readBinaryFileFromHost(file).then(uint8Array => {
 			if (uint8Array) {
 				span_bit_dl.innerHTML += ' <font color="green">Done</font>';
@@ -250,60 +234,55 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 
 	if (soj_name && soj_fileContent) {
 		fileData[soj_name] = soj_fileContent;
-		cmd.push("--bridge", soj_name);
+		cmd_line.push("--bridge", soj_name);
 	}
 	if (filename && fileContent) {
 		fileData[filename] = fileContent;
-		cmd.push(filename);
+		cmd_line.push(filename);
 	}
 
 	/* openFPGALoader run */
 	const span_ofl_exec = document.createElement("div");
 	oflOpStatus.appendChild(span_ofl_exec);
 	span_ofl_exec.innerHTML = 'Execute openFPGALoader:';
-	document.getElementById("oflCmdManual").textContent = "openFPGALoader " + cmd.join(" ");
+	document.getElementById("oflCmdManual").textContent = "openFPGALoader " + cmd_line.join(" ");
 
-	const ret_ofl = await ofl_exec(cmd, oflStatus, fileData, true, true);
+	const ret_ofl = await ofl_exec(cmd_line, oflStatus, fileData, true, true);
 	span_ofl_exec.innerHTML = ret_ofl.success
 		? 'Execute openFPGALoader: <span style="color:green">Done</span>'
 		: 'Execute openFPGALoader: <span style="color:red">Fail</span>';
+}
+
+// ------------------ Program Manual ------------------ //
+
+document.getElementById('programButtonManual').addEventListener('click', async function () {
+	// User bitstream file and name
+	const file    = document.getElementById("fileInput").files[0];
+	// openFPGALoader command line
+	const ofl_cmd = document.getElementById("ofl_cmd").value.split(' ');
+	perform_operation(file, ofl_cmd);
 });
 
 // Handle program button click
-programButton.addEventListener('click', async function () {
-	/*const cable     = document.getElementById("cable_select");
-	const board     = document.getElementById("board_select");
-	const tgt_flash = document.getElementById("ofl_flash").checked;
-	const tgt_sram  = document.getElementById("ofl_sram").checked;
-	const verify    = document.getElementById("ofl_verify").checked;
-	const file      = document.getElementById("fileAutoInput").files[0];
+document.getElementById('programButton').addEventListener('click', async function () {
+	const select_cable = document.getElementById('cable_select');
+	const select_board = document.getElementById('board_select');
+	const tgt_flash    = document.getElementById("ofl_flash").checked;
+	const tgt_sram     = document.getElementById("ofl_sram").checked;
+	const verify       = document.getElementById("ofl_verify").checked;
+	const file         = document.getElementById("fileAutoInput").files[0];
 
-	let cmd = ["--quiet"];
-	if (cable.selectedIndex > 0) {
-		cmd.push("-c", cable.options[cable.selectedIndex].text);
-	}
-	if (board.selectedIndex > 0) {
-		cmd.push("-b", board.options[board.selectedIndex].text);
-	}
+	let ofl_cmd = [];
+	if (select_cable.selectedIndex > 0)
+		ofl_cmd.push("-c", select_cable.options[select_cable.selectedIndex].text);
+	if (select_board.selectedIndex > 0)
+		ofl_cmd.push("-b", select_board.options[select_board.selectedIndex].text);
 	if (tgt_flash) {
-		cmd.push("-f");
+		ofl_cmd.push("-f");
 		if (verify)
 			cmd.push("--verify");
 	}
-	console.log(cmd.join(" "))
-
-	const filename = file.name;
-	const reader   = new FileReader();
-
-	reader.onload = function (event) {
-		const binaryData  = new Uint8Array(event.target.result);
-		const fileContent = binaryData;
-		const fileData    = {[filename]: fileContent};
-		cmd.push(filename);
-		document.getElementById("oflCmdManual").textContent = "openFPGALoader " + cmd.join(" ");
-		const ret = await ofl_exec(cmd, oflStatus, fileData, true, true);
-	};
-	reader.readAsArrayBuffer(file);*/
+	perform_operation(file, ofl_cmd);
 });
 
 // Try to detect FPGA Vendor/Model
