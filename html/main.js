@@ -22,11 +22,12 @@ const oflStatus     = document.getElementById('OFLStatus');
 let device          = null;
 
 async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
-	let lines   = [];
-	var ret_val = true;
+	const lines = [];
+	let success = true;
 
 	if (!device) {
-		console.log("device null");
+		if (verbose)
+			console.log("device null");
 		await navigator.usb.requestDevice({ filters: [] })
 			.then((usbDevice) => {
 				device = usbDevice;
@@ -37,37 +38,51 @@ async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
 				USBStatus.innerHTML = "USB Status: <font color='red'>Error ${e} </font>";
 			});
 	}
-	div_log.innerHTML = "";
+
+	if (div_log)
+		div_log.innerHTML = "";
 
 	/* Get current time to compute duration */
-	const startTime = Date.now();
+	const startTime = performance.now();
+
 	try {
-		const response = await runOpenFPGALoader(args, fileIn,
-			{
-				stdout:lineBuffered((line) => {
-					lines.push(line);
+		const response = await runOpenFPGALoader(args, fileIn, {
+			stdout:lineBuffered((line) => {
+				lines.push(line);
+				if (verbose)
 					console.log(line);
+				if (div_log)
 					div_log.innerHTML += line + "</br>\n";
-				}),
-				stderr:lineBuffered((line) => {
-					lines.push(line)
+			}),
+			stderr:lineBuffered((line) => {
+				lines.push(line)
+				if (verbose)
 					console.log(line);
+				if (div_log)
 					div_log.innerHTML += line + "</br>\n";
-				}),
-				decodeASCII: true
-			}
-		);
+			}),
+			decodeASCII: true
+		});
+
+		/* Compute and display execution duration */
+		const endTime  = performance.now();
+		const duration = Math.round(endTime - startTime);
+
+		if (verbose)
+			console.log(`Execution time: ${duration} milliseconds`);
+		if (div_log)
+			div_log.innerHTML += `<div class="timing"><font color="green">Execution completed in ${duration}ms</font></div><br>\n`;
+
 	} catch(error) {
-	    console.error("a" + error + "b");
-		ret_val = false;
+	    console.error("openFPGALoader execution error:", error);
+		success = false;
+		if (div_log)
+			div_log.innerHTML += `<span class="error"><font color="red">Error: ${error.message}</font></span><br>\n`;
+	} finally {
+		// TODO
 	}
 
-	/* Compute and display execution duration */
-	const endTime = Date.now();
-	const elapsedTime = endTime - startTime;
-	console.log(`Execution time: ${elapsedTime} milliseconds`);
-
-	return [ret_val, lines];
+	return [success, lines];
 }
 
 async function fill_cables() {
