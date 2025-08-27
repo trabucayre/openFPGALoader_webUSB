@@ -5,11 +5,6 @@ import { lineBuffered, chunked } from 'https://cdn.jsdelivr.net/npm/@yowasp/runt
 // List of supported boards
 var list_boards = {};
 
-// Prepare cable_select select item
-await fill_cables();
-// Prepare board_select select item
-await fill_boards();
-
 const detectButton  = document.getElementById('detectButton');
 const connectButton = document.getElementById('connectButton');
 const programButton = document.getElementById('programButton');
@@ -21,11 +16,16 @@ const oflStatus     = document.getElementById('OFLStatus');
 // USB device object
 let device          = null;
 
-async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
-	const lines = [];
+// Prepare cable_select select item
+await fill_cables();
+// Prepare board_select select item
+await fill_boards();
+
+async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
+	var lines   = [];
 	let success = true;
 
-	if (!device) {
+	if (!device && with_usb) {
 		if (verbose)
 			console.log("device null");
 		await navigator.usb.requestDevice({ filters: [] })
@@ -35,7 +35,7 @@ async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
 			})
 			.catch((e) => {
 				device = null;
-				USBStatus.innerHTML = "USB Status: <font color='red'>Error ${e} </font>";
+				USBStatus.innerHTML = "USB Status: <font color='red'>Error " + e + "</font>";
 			});
 	}
 
@@ -71,64 +71,75 @@ async function ofl_exec(args, div_log, fileIn={}, verbose=true) {
 		if (verbose)
 			console.log(`Execution time: ${duration} milliseconds`);
 		if (div_log)
-			div_log.innerHTML += `<div class="timing"><font color="green">Execution completed in ${duration}ms</font></div><br>\n`;
+			div_log.innerHTML += '<div class="timing"><font color="green">Execution completed in ${duration}ms</font></div><br>\n';
 
 	} catch(error) {
 	    console.error("openFPGALoader execution error:", error);
 		success = false;
 		if (div_log)
-			div_log.innerHTML += `<span class="error"><font color="red">Error: ${error.message}</font></span><br>\n`;
+			div_log.innerHTML += '<span class="error"><font color="red">Error: ' + error.message + '</font></span><br>\n';
 	} finally {
 		// TODO
 	}
 
-	return [success, lines];
+	return {success, lines};
 }
 
 async function fill_cables() {
 	const select_cable = document.getElementById('cable_select');
-	let lines          = [];
-	const response = await runOpenFPGALoader(["--list-cables"],
-		{},
-		{
-			stdout:lineBuffered((line) => lines.push(line)),
-			stderr:console.log, decodeASCII: true
+	try {
+		var lines  = [];
+		const result = await ofl_exec(["--list-cables"], null, {}, false, false);
+		if (!result.success) {
+			const mess = "Failed to retrieve cable list";
+			//oflStatus.innerHTML += '<span class="error"><font color="red">${mess}</font></span><br>\n';
+			throw new Error(mess);
 		}
-	);
-	lines = lines.slice(2); // remove some messages
-	lines.map( (line, i) => {
-	    let opt       = document.createElement("option");
-		const cable   = line.split(' ')[0];
-	    opt.value     = i + 1; // the index
-	    opt.innerHTML = cable;
-	    select_cable.append(opt);
-	});
+
+		lines = result.lines.slice(2); // remove some messages
+		lines.map( (line, i) => {
+		    let opt       = document.createElement("option");
+			const cable   = line.split(' ')[0];
+		    opt.value     = i + 1; // the index
+		    opt.innerHTML = cable;
+		    select_cable.append(opt);
+		});
+	} catch (error) {
+		const mess = "Error filling cables: " + error;
+		console.error(mess);
+		oflStatus.innerHTML += '<span class="error"><font color="red">' + mess + '</font></span></br>\n';
+    }
 }
 
 async function fill_boards() {
 	const select_board = document.getElementById('board_select');
-	let lines = [];
-	const response = await runOpenFPGALoader(["--list-boards"],
-		{},
-		{
-			stdout:lineBuffered((line) => lines.push(line)),
-			stderr:console.log, decodeASCII: true
+	try {
+		var lines = [];
+		const result = await ofl_exec(["--list-boards"], null, {}, false, false);
+		if (!result.success) {
+			const mess = "Failed to retrieve board list";
+			oflStatus.innerHTML += `<span class="error"><font color="red">' + mess + '</font></span><br>\n`;
+			throw new Error(mess);
 		}
-	);
-	lines = lines.slice(2);
-	lines.map( (line, i) => {
-	    let opt       = document.createElement("option");
-		const line_s  = line.replace(/  +/g, ' ').split(" ");
-		const board   = line_s[0];
-	    opt.value     = i + 1; // the index
-	    opt.innerHTML = board;
-	    select_board.append(opt);
-		list_boards[board] = {"cable": line_s[1], "fpga_part": line_s[2]};
-	});
+
+		lines = result.lines.slice(2);
+		lines.map( (line, i) => {
+		    let opt       = document.createElement("option");
+			const line_s  = line.replace(/  +/g, ' ').split(" ");
+			const board   = line_s[0];
+		    opt.value     = i + 1; // the index
+		    opt.innerHTML = board;
+		    select_board.append(opt);
+			list_boards[board] = {"cable": line_s[1], "fpga_part": line_s[2]};
+		});
+	} catch (error) {
+		const mess = 'Error filling boards: ' + error;
+		console.error(mess);
+		oflStatus.innerHTML += '<span class="error"><font color="red">${mess}</font></span></br>\n';
+	}
 }
 
 document.getElementById('programButtonManual').addEventListener('click', async function () {
-	console.log(document.getElementById("fileInput").files[0])
 	// User bitstream file and name
 	let file      = document.getElementById("fileInput").files[0];
 	var filename  = null;
@@ -251,10 +262,8 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	span_ofl_exec.innerHTML = 'Execute openFPGALoader:';
 
 	document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
-	var ret_ofl   = await ofl_exec(cmd, oflStatus, fileData, true);
-	const success = ret_ofl[0];
-	const lines   = ret_ofl[1];
-	if (success) {
+	var ret_ofl   = await ofl_exec(cmd, oflStatus, fileData, true, true);
+	if (ret_ofl.success) {
 		span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="green">Done</font>';
 	} else {
 		span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="red">Fail</font>';
@@ -298,7 +307,7 @@ programButton.addEventListener('click', async () => {
 		cmd.push(filename);
 		document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
 		try {
-			ofl_exec(cmd, "OFLStatus", fileData, true);
+			ofl_exec(cmd, oflStatus, fileData, true, true);
 		} catch (error) {
 			console.error(errror);
 		}
@@ -373,9 +382,8 @@ async function detectSpiOverJtagName(cmd_line)
 	if (ret_status != 1 && ret_status != 2) {
 		// Executes --detect command to have manufacturer name and
 		// FPGA Model
-		const ret     = await ofl_exec(search_cmd, oflStatus, [], false);
-		const success = ret[0]; // FIXME: handle failure
-		const lines   = ret[1];
+		const ret   = await ofl_exec(search_cmd, oflStatus, [], true, false);
+		const lines = ret.lines;
 
 		// Extracts vendor and Model
 		const vendor_index = lines.findIndex(findManufacturer);
