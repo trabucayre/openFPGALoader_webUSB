@@ -2,9 +2,10 @@
 import { runOpenFPGALoader     } from './bundle.js';
 import { lineBuffered, chunked } from 'https://cdn.jsdelivr.net/npm/@yowasp/runtime/lib/util.js';
 
-// List of supported boards
-var list_boards = {};
+// Supported boards storage
+const list_boards = {};
 
+// DOM references
 const detectButton  = document.getElementById('detectButton');
 const connectButton = document.getElementById('connectButton');
 const programButton = document.getElementById('programButton');
@@ -14,7 +15,7 @@ const oflOpStatus   = document.getElementById('oflOpStatus');
 const oflStatus     = document.getElementById('OFLStatus');
 
 // USB device object
-let device          = null;
+let device = null;
 
 // Prepare cable_select select item
 await fill_cables();
@@ -22,7 +23,7 @@ await fill_cables();
 await fill_boards();
 
 async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
-	var lines   = [];
+	let lines   = [];
 	let success = true;
 
 	if (!device && with_usb) {
@@ -47,14 +48,14 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 
 	try {
 		const response = await runOpenFPGALoader(args, fileIn, {
-			stdout:lineBuffered((line) => {
+			stdout: lineBuffered(line => {
 				lines.push(line);
 				if (verbose)
 					console.log(line);
 				if (div_log)
 					div_log.innerHTML += line + "</br>\n";
 			}),
-			stderr:lineBuffered((line) => {
+			stderr: lineBuffered(line => {
 				lines.push(line)
 				if (verbose)
 					console.log(line);
@@ -71,19 +72,20 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 		if (verbose)
 			console.log(`Execution time: ${duration} milliseconds`);
 		if (div_log)
-			div_log.innerHTML += '<div class="timing"><font color="green">Execution completed in ${duration}ms</font></div><br>\n';
+			div_log.innerHTML += `<div class="timing"><font color="green">Execution completed in ${duration}ms</font></div><br>\n`;
 
 	} catch(error) {
-	    console.error("openFPGALoader execution error:", error);
+		console.error("openFPGALoader execution error:", error);
 		success = false;
 		if (div_log)
 			div_log.innerHTML += '<span class="error"><font color="red">Error: ' + error.message + '</font></span><br>\n';
 	} finally {
 		// TODO
 	}
-
 	return {success, lines};
 }
+
+// ------------------ Init Selectors ------------------ //
 
 async function fill_cables() {
 	const select_cable = document.getElementById('cable_select');
@@ -92,7 +94,7 @@ async function fill_cables() {
 		const result = await ofl_exec(["--list-cables"], null, {}, false, false);
 		if (!result.success) {
 			const mess = "Failed to retrieve cable list";
-			//oflStatus.innerHTML += '<span class="error"><font color="red">${mess}</font></span><br>\n';
+			oflStatus.innerHTML += '<span class="error"><font color="red">${mess}</font></span><br>\n';
 			throw new Error(mess);
 		}
 
@@ -139,18 +141,20 @@ async function fill_boards() {
 	}
 }
 
+// ------------------ Program Manual ------------------ //
+
 document.getElementById('programButtonManual').addEventListener('click', async function () {
 	// User bitstream file and name
-	let file      = document.getElementById("fileInput").files[0];
+	const file    = document.getElementById("fileInput").files[0];
 	var filename  = null;
 
 	// spiOverJtag and User bitstream content.
 	var soj_fileContent = null;   // SpiOverJtag bitstream content
 
 	// openFPGALoader command line
-	const ofl_cmd = document.getElementById("ofl_cmd")
-	var cmd       = ofl_cmd.value.split(' ');
-	var fileContent     = null;   // user bitstream content
+	const ofl_cmd   = document.getElementById("ofl_cmd")
+	var cmd         = ofl_cmd.value.split(' ');
+	var fileContent = null;   // user bitstream content
 
 	//cmd.push("--quiet");
 
@@ -171,9 +175,9 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	// Detect if command if to flash a bitstream
 	// if so, detectSpiOverJtagName will return spiOverJtag bitstream
 	// name, otherwise ""
-	const ret           = await detectSpiOverJtagName(cmd);
-	const soj_name      = ret[1]; // spiOverJtag bitstream name
-	const ret_code      = ret[0]; // spiOverJtag detect ret code
+	const ret      = await detectSpiOverJtagName(cmd);
+	const soj_name = ret[1]; // spiOverJtag bitstream name
+	const ret_code = ret[0]; // spiOverJtag detect ret code
 	// FIXME: todo something with return code.
 
 	var detect_status = "";
@@ -242,78 +246,64 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	oflOpStatus.innerHTML += "</br>";
 
 	/* Prepare openFPGALoader call/cmd line */
-	var fileData  = {};
+	const fileData = {};
 
-	if (soj_name && soj_fileContent != null) {
+	if (soj_name && soj_fileContent) {
 		fileData[soj_name] = soj_fileContent;
-		cmd.push("--bridge");
-		cmd.push(soj_name);
+		cmd.push("--bridge", soj_name);
 	}
-	if (filename && fileContent != null) {
+	if (filename && fileContent) {
 		fileData[filename] = fileContent;
 		cmd.push(filename);
 	}
-	console.log(fileData);
 
 	/* openFPGALoader run */
-	console.log("start");
-	var span_ofl_exec = document.createElement("span_ofl_exec");
+	const span_ofl_exec = document.createElement("div");
 	oflOpStatus.appendChild(span_ofl_exec);
 	span_ofl_exec.innerHTML = 'Execute openFPGALoader:';
+	document.getElementById("oflCmdManual").textContent = "openFPGALoader " + cmd.join(" ");
 
-	document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
-	var ret_ofl   = await ofl_exec(cmd, oflStatus, fileData, true, true);
-	if (ret_ofl.success) {
-		span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="green">Done</font>';
-	} else {
-		span_ofl_exec.innerHTML = 'Execute openFPGALoader: <font color="red">Fail</font>';
-	}
-
-	console.log("end");
+	const ret_ofl = await ofl_exec(cmd, oflStatus, fileData, true, true);
+	span_ofl_exec.innerHTML = ret_ofl.success
+		? 'Execute openFPGALoader: <span style="color:green">Done</span>'
+		: 'Execute openFPGALoader: <span style="color:red">Fail</span>';
 });
 
 // Handle program button click
-programButton.addEventListener('click', async () => {
-	const cable     = document.getElementById("cable_select");
+programButton.addEventListener('click', async function () {
+	/*const cable     = document.getElementById("cable_select");
 	const board     = document.getElementById("board_select");
 	const tgt_flash = document.getElementById("ofl_flash").checked;
 	const tgt_sram  = document.getElementById("ofl_sram").checked;
 	const verify    = document.getElementById("ofl_verify").checked;
 	const file      = document.getElementById("fileAutoInput").files[0];
 
-	var cmd = ["--quiet"]
+	let cmd = ["--quiet"];
 	if (cable.selectedIndex > 0) {
-		cmd.push("-c");
-		cmd.push(cable.options[cable.selectedIndex].text);
+		cmd.push("-c", cable.options[cable.selectedIndex].text);
 	}
 	if (board.selectedIndex > 0) {
-		cmd.push("-b");
-		cmd.push(board.options[board.selectedIndex].text);
+		cmd.push("-b", board.options[board.selectedIndex].text);
 	}
 	if (tgt_flash) {
-		cmd.push("-f")
+		cmd.push("-f");
 		if (verify)
-			cmd.push("--verify")
+			cmd.push("--verify");
 	}
 	console.log(cmd.join(" "))
 
 	const filename = file.name;
-	let reader     = new FileReader();
+	const reader   = new FileReader();
 
 	reader.onload = function (event) {
-		const binaryData      = new Uint8Array(event.target.result);
-		const fileContent     = binaryData;
-		const fileData        = {[filename]: fileContent};
+		const binaryData  = new Uint8Array(event.target.result);
+		const fileContent = binaryData;
+		const fileData    = {[filename]: fileContent};
 		cmd.push(filename);
-		document.getElementById("oflCmdManual").textContent = "openFPGALoader" + cmd.join(" ")
-		try {
-			ofl_exec(cmd, oflStatus, fileData, true, true);
-		} catch (error) {
-			console.error(errror);
-		}
+		document.getElementById("oflCmdManual").textContent = "openFPGALoader " + cmd.join(" ");
+		const ret = await ofl_exec(cmd, oflStatus, fileData, true, true);
 	};
-
-	reader.readAsArrayBuffer(file);
+	reader.readAsArrayBuffer(file);*/
 });
 
 // Try to detect FPGA Vendor/Model
@@ -427,40 +417,35 @@ function findManufacturer(l) {
 function findModel(l) {
 	return l.includes("model");
 }
+// ------------------ Helpers ------------------ //
 
 // Fetch spiOverJtag bitstream from the server
 async function readBinaryFileFromUrl(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok)
-            throw new Error(`HTTP error! status: ${response.status}`);
+	try {
+		const response = await fetch(url);
+		if (!response.ok)
+			throw new Error(`HTTP error! status: ${response.status}`);
 		const arrayBuffer = await response.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        return uint8Array;
-    } catch (error) {
-        console.error('Error reading file:', error);
-        return null;
-    }
+		const uint8Array = new Uint8Array(arrayBuffer);
+		return uint8Array;
+	} catch (error) {
+		console.error('Error reading file:', error);
+		return null;
+	}
 }
 
 // Fetch the bitstream from the host
 function readBinaryFileFromHost(file) {
 	return new Promise((resolve, reject) => {
-		var reader = new FileReader();
+		const reader = new FileReader();
 
-		reader.onload = function (evt) {
-			resolve(new Uint8Array(evt.target.result));
-		};
-
-		reader.onerror = function (evt) {
-			reject("File reading failed");
-		};
-
+		reader.onload = evt => resolve(new Uint8Array(evt.target.result));
+		reader.onerror = () => reject("File reading failed");
 		try {
 			reader.readAsArrayBuffer(file);
 		} catch (error) {
 			console.error('Error reading file:', error);
-			return null;
+			resolve(null);
 		}
 	});
 }
@@ -470,14 +455,14 @@ function readBinaryFileFromHost(file) {
 /* -------------------------------------- */
 
 // Handle device disconnection
-navigator.usb.addEventListener('disconnect', (event) => {
+navigator.usb.addEventListener('disconnect', event => {
 	console.log("disconnect");
 	if (event.device === device) {
-	    USBStatus.innerHTML = 'USB Status: <font color="blue">Device disconnected</font>';
+		USBStatus.innerHTML = 'USB Status: <font color="blue">Device disconnected</font>';
 	}
 });
 
-navigator.usb.addEventListener('connect', (event) => {
+navigator.usb.addEventListener('connect', event => {
 	console.log("connect");
 	USBStatus.innerHTML = 'USB Status: <font color="green">connected</font>';
 });
