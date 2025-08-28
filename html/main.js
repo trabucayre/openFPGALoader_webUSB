@@ -18,6 +18,10 @@ await fill_cables();
 // Prepare board_select select item
 await fill_boards();
 
+function update_ofl_log(div_log, message) {
+	div_log.innerHTML += message.replace(/ /g, "&nbsp") + "</br>\n";
+}
+
 async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 	let lines   = [];
 	let success = true;
@@ -49,14 +53,14 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 				if (verbose)
 					console.log(line);
 				if (div_log)
-					div_log.innerHTML += line + "</br>\n";
+					update_ofl_log(div_log, line);
 			}),
 			stderr: lineBuffered(line => {
 				lines.push(line)
 				if (verbose)
 					console.log(line);
 				if (div_log)
-					div_log.innerHTML += line + "</br>\n";
+					update_ofl_log(div_log, line);
 			}),
 			decodeASCII: true
 		});
