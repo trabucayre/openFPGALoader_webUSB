@@ -20,6 +20,7 @@ await fill_boards();
 
 function update_ofl_log(div_log, message) {
 	div_log.innerHTML += message.replace(/ /g, "&nbsp") + "</br>\n";
+	div_log.scrollTop = div_log.scrollHeight;
 }
 
 async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
@@ -41,7 +42,7 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 	}
 
 	if (div_log)
-		div_log.innerHTML = "";
+		div_log.innerHTML = "openFPGALoader " + args.join(' ') + "</br>\n";
 
 	/* Get current time to compute duration */
 	const startTime = performance.now();
@@ -80,7 +81,8 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 		if (div_log)
 			div_log.innerHTML += '<span class="error"><font color="red">Error: ' + error.message + '</font></span><br>\n';
 	} finally {
-		// TODO
+		if (div_log)
+			div_log.scrollTop = div_log.scrollHeight;
 	}
 	return {success, lines};
 }
