@@ -318,8 +318,14 @@ async function detectSpiOverJtagName(cmd_line)
 	var search_cmd = ["--detect"];
 
 	// First quick try: user has provided part
-	if (cmd_line.indexOf("--fpga-part") != -1) {
-		const part = cmd_line[cmd_line.indexOf("--fpga-part") + 1];
+	const fpga_part_idx = cmd_line.findIndex(val => val.includes("--fpga-part"));
+	if (fpga_part_idx != -1) {
+		let part;
+		// --fpga-part=xxxx
+		if (cmd_line[fpga_part_idx].includes("="))
+			part = cmd_line[fpga_part_idx].split('=')[1];
+		else // --fpga-part xxxx
+			part = cmd_line[fpga_part_idx + 1];
 		ret_status = 1;
 		soj_name   = part;
 		return [ret_status, "spiOverJtag_" + part + ".bit.gz"];
@@ -390,9 +396,6 @@ async function detectSpiOverJtagName(cmd_line)
 		}
 		// Nothing to do for FPGA with internal SPI Flash access logic.
 	}
-
-	if (ret_status > 0)
-		soj_name = "spiOverJtag" + soj_name + ".bit.gz";
 
 	return [ret_status, soj_name]
 }
