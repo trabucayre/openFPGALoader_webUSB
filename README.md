@@ -15,10 +15,20 @@ slower compared to the native binary version compiled for your computer.
 
 ### Repository structure
 
+- `emsdk`: Emscripten SDK submodule
 - `zlib-src`: zlib submodule
 - `libusb-src`: libusb submodule
 - `libftdi-src`: libftdi submodule
 - `html`: HTML and JavaScript files
+- `server_config`: webserver (lighttpd) basic configuration and crontab to update every 30mins `openFPGALoader` and html files.
+
+### Status / Version
+
+- `emsdk`: `3bcf1dcd01f040f370e10fe673a092d9ed79ebb5` / `3.1.51`
+- `zlib`: `5a82f71ed1dfc0bec044d9702463dbdf84ea3b71`
+- `libusb`: `03b119c48dba7075225451b74b358b87efa122b0`
+- `libftdi`; `f7ed9dd371f9387ed5b715a4f316eea9f85de48d`
+- `openFPGALoader`: `build.sh` always uses master branch / latest commit (`clone` or `pull` is performed each time)
 
 ## Build / Install
 
