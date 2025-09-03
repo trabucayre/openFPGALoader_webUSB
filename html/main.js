@@ -37,7 +37,7 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 			})
 			.catch((e) => {
 				device = null;
-				USBStatus.innerHTML = "USB Status: <font color='red'>Error " + e + "</font>";
+				USBStatus.innerHTML = `USB Status: <font color='red'>Error ${e}</font>`;
 			});
 	}
 
@@ -79,7 +79,7 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 		console.error("openFPGALoader execution error:", error);
 		success = false;
 		if (div_log)
-			div_log.innerHTML += '<span class="span-error">Error: ' + error.message + '</span><br>\n';
+			div_log.innerHTML += `<span class="span-error">Error: ${error.message} </span><br>\n`;
 	} finally {
 		if (div_log)
 			div_log.scrollTop = div_log.scrollHeight;
@@ -111,7 +111,7 @@ async function fill_cables() {
 	} catch (error) {
 		const mess = "Error filling cables: " + error;
 		console.error(mess);
-		oflStatus.innerHTML += '<span class="span-error">' + mess + '</span></br>\n';
+		oflStatus.innerHTML += `<span class="span-error"> ${mess}</span></br>\n`;
 	}
 }
 
@@ -122,7 +122,7 @@ async function fill_boards() {
 		const result = await ofl_exec(["--list-boards"], null, {}, false, false);
 		if (!result.success) {
 			const mess = "Failed to retrieve board list";
-			oflStatus.innerHTML += `<span class="span-error">' + mess + '</span><br>\n`;
+			oflStatus.innerHTML += `<span class="span-error"> ${mess}</span><br>\n`;
 			throw new Error(mess);
 		}
 
@@ -180,8 +180,8 @@ async function perform_operation(file, cmd_line) {
 		detect_status = "SpiOverJtag not required";
 		mess += '<span class="span-info">Not required.</span>'
 	} else {
-		detect_status = "FPGA Part detected " + soj_name + " method: "
-		mess += '<span class="span-success">Ok (' + soj_name + ').</span>'
+		detect_status = `FPGA Part detected ${soj_name} method: `
+		mess += `<span class="span-success">Ok (${soj_name}).</span>`
 		if (ret_code == 1) {
 			detect_status += "--fpga_part option";
 		} else if (ret_code == 2) {
@@ -231,7 +231,7 @@ async function perform_operation(file, cmd_line) {
 			}
 		});
 	} else {
-		span_bit_dl.innerHTML = 'Fetch Bitstream: span class="span-info">Not required</span>';
+		span_bit_dl.innerHTML = 'Fetch Bitstream: <span class="span-info">Not required</span>';
 	}
 	oflOpStatus.innerHTML += "</br>";
 
