@@ -73,13 +73,13 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 		if (verbose)
 			console.log(`Execution time: ${duration} milliseconds`);
 		if (div_log)
-			div_log.innerHTML += `<div class="timing"><font color="green">Execution completed in ${duration}ms</font></div><br>\n`;
+			div_log.innerHTML += `<div class="timing"><span class="span-success">Execution completed in ${duration}ms</span></div><br>\n`;
 
 	} catch(error) {
 		console.error("openFPGALoader execution error:", error);
 		success = false;
 		if (div_log)
-			div_log.innerHTML += '<span class="error"><font color="red">Error: ' + error.message + '</font></span><br>\n';
+			div_log.innerHTML += '<span class="span-error">Error: ' + error.message + '</span><br>\n';
 	} finally {
 		if (div_log)
 			div_log.scrollTop = div_log.scrollHeight;
@@ -96,7 +96,7 @@ async function fill_cables() {
 		const result = await ofl_exec(["--list-cables"], null, {}, false, false);
 		if (!result.success) {
 			const mess = "Failed to retrieve cable list";
-			oflStatus.innerHTML += '<span class="error"><font color="red">${mess}</font></span><br>\n';
+			oflStatus.innerHTML += `<span class="span-error">${mess}</span><br>\n`;
 			throw new Error(mess);
 		}
 
@@ -111,7 +111,7 @@ async function fill_cables() {
 	} catch (error) {
 		const mess = "Error filling cables: " + error;
 		console.error(mess);
-		oflStatus.innerHTML += '<span class="error"><font color="red">' + mess + '</font></span></br>\n';
+		oflStatus.innerHTML += '<span class="span-error">' + mess + '</span></br>\n';
 	}
 }
 
@@ -122,7 +122,7 @@ async function fill_boards() {
 		const result = await ofl_exec(["--list-boards"], null, {}, false, false);
 		if (!result.success) {
 			const mess = "Failed to retrieve board list";
-			oflStatus.innerHTML += `<span class="error"><font color="red">' + mess + '</font></span><br>\n`;
+			oflStatus.innerHTML += `<span class="span-error">' + mess + '</span><br>\n`;
 			throw new Error(mess);
 		}
 
@@ -139,7 +139,7 @@ async function fill_boards() {
 	} catch (error) {
 		const mess = 'Error filling boards: ' + error;
 		console.error(mess);
-		oflStatus.innerHTML += '<span class="error"><font color="red">${mess}</font></span></br>\n';
+		oflStatus.innerHTML += `<span class="span-error">${mess}</span></br>\n`;
 	}
 }
 
@@ -173,15 +173,15 @@ async function perform_operation(file, cmd_line) {
 	var detect_status = "";
 	var mess          = "SpiOverJtag Bridge: ";
 	if (ret_code < 0) {
-		detect_status = "<font color=#ff0000>>Error to detect FPGA part: can't flash bitstream</font>";
-		mess += '<font color="red">Error. Please adds --fpga-part option or --board</font>';
+		detect_status = "Error to detect FPGA part: can't flash bitstream";
+		mess += '<span class="span-error">Error. Please adds --fpga-part option or --board</span>';
 		return;
 	} else if (ret_code == 0) {
 		detect_status = "SpiOverJtag not required";
-		mess += '<font color="blue">Not required.</font>'
+		mess += '<span class="span-info">Not required.</span>'
 	} else {
-		mess += '<font color="green">Ok (' + soj_name + ').</font>'
 		detect_status = "FPGA Part detected " + soj_name + " method: "
+		mess += '<span class="span-success">Ok (' + soj_name + ').</span>'
 		if (ret_code == 1) {
 			detect_status += "--fpga_part option";
 		} else if (ret_code == 2) {
@@ -201,15 +201,15 @@ async function perform_operation(file, cmd_line) {
 		span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge:';
 		await readBinaryFileFromUrl(soj_file_url).then(uint8Array => {
 		    if (uint8Array) {
-				span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <font color="green">Done</font>';
+				span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <span class="span-success">Done</span>';
 				soj_fileContent = uint8Array;
 		    } else {
-				span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <font color="red">Fail</font>';
+				span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <span class="span-error">Fail</span>';
 				return;
 			}
 		});
 	} else {
-		span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <font color="blue">Not required</font>';
+		span_soj_dl.innerHTML = 'Fetch SpiOverJtag Bridge: <span class="span-info">Not required</span>';
 	}
 	oflOpStatus.innerHTML += "</br>";
 
@@ -222,16 +222,16 @@ async function perform_operation(file, cmd_line) {
 		span_bit_dl.innerHTML = 'Fetch ' + filename + " Bitstream:";
 		await readBinaryFileFromHost(file).then(uint8Array => {
 			if (uint8Array) {
-				span_bit_dl.innerHTML += ' <font color="green">Done</font>';
+				span_bit_dl.innerHTML += ' <span class="span-success">Done</span>';
 				fileContent = uint8Array;
 			} else {
 				console.log("error");
-				span_bit_dl.innerHTML += ' <font color="red">Fail</font>';
+				span_bit_dl.innerHTML += ' <span class="span-error">Fail</span>';
 				return;
 			}
 		});
 	} else {
-		span_bit_dl.innerHTML = 'Fetch Bitstream: <font color="blue">Not required</font>';
+		span_bit_dl.innerHTML = 'Fetch Bitstream: span class="span-info">Not required</span>';
 	}
 	oflOpStatus.innerHTML += "</br>";
 
@@ -255,8 +255,8 @@ async function perform_operation(file, cmd_line) {
 
 	const ret_ofl = await ofl_exec(cmd_line, oflStatus, fileData, true, true);
 	span_ofl_exec.innerHTML = ret_ofl.success
-		? 'Execute openFPGALoader: <span style="color:green">Done</span>'
-		: 'Execute openFPGALoader: <span style="color:red">Fail</span>';
+		? 'Execute openFPGALoader: <span class="span-success">Done</span>'
+		: 'Execute openFPGALoader: <span class="span-error">Fail</span>';
 }
 
 // ------------------ Program Manual ------------------ //
