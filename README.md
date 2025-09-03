@@ -116,3 +116,11 @@ sudo chmod 400 /etc/lighttpd/certs/lighttpd.pem
 ```bash
 sudo systemctl restart lighttpd.service
 ```
+
+## Acknowledgments.
+
+This work has been supported by Enjoy-Digital, whose funding has significantly contributed to the development and enhancement of this project.
+
+<p align="center">
+  <img src="html/figs/enjoy_digital.png" width="200" />
+</p>
