@@ -61,6 +61,9 @@ This script builds the libraries required by openFPGALoader as well as openFPGAL
 - Running `./build.sh openfpgaloader` will always update **openFPGALoader** to the latest commit.
 - The deploy step runs only if **openFPGALoader** has been successfully built at least once.
 
+## Web Server
+For the sack of this discussion, and to simplify, we assume repository was cloned in `/srv` repository.
+
 ### Standalone python server
 
 The python script *html/run.py* is a minimal web-server.
@@ -76,6 +79,40 @@ cd html
 ./run.py
 ```
 
-### Prepare Web Server
+### lighttpd
 
-*TBD*
+To install **lighttpd** with HTTPS support, run:
+
+```bash
+sudo apt install lighttpd lighttpd-mod-openssl
+```
+
+A ready-to-use configuration is provided in `server_config/lighttpd.conf`.
+
+The key modifications are:
+- Updated `server.modules` to include:
+  - `mod_openssl`: enables HTTPS support
+  - `mod_setenv`: add security headers required for `pthread` usage by `libusb`
+- Updated `server.document-root` to point to the `openFPGALoader_webUSB/html` directory
+- Added the following responses headers:
+  ```lighttpd
+  setenv.add-response-header = (
+    "Cross-Origin-Opener-Policy" => "same-origin",
+    "Cross-Origin-Embedder-Policy" => "require-corp"
+  )
+  ```
+
+#### Generating a Self-Signed Certificate
+
+To enable HTTPS, create a certificate:
+
+```bash
+sudo mkdir /etc/lighttpd/certs
+sudo openssl req -new -x509 -keyout /etc/lighttpd/certs/lighttpd.pem -out /etc/lighttpd/certs/lighttpd.pem -days 365 -nodes
+sudo chmod 400 /etc/lighttpd/certs/lighttpd.pem
+```
+
+#### Restart lighttpd server
+```bash
+sudo systemctl restart lighttpd.service
+```
