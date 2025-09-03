@@ -97,7 +97,8 @@ To install **lighttpd** with HTTPS support, run:
 sudo apt install lighttpd lighttpd-mod-openssl
 ```
 
-A ready-to-use configuration is provided in `server_config/lighttpd.conf`.
+A ready-to-use configuration is provided in `server_config/lighttpd.conf`. This configuration must be copied in
+`/etc/lighttpd/lighttpd.conf`
 
 The key modifications are:
 - Updated `server.modules` to include:
@@ -125,6 +126,51 @@ sudo chmod 400 /etc/lighttpd/certs/lighttpd.pem
 #### Restart lighttpd server
 ```bash
 sudo systemctl restart lighttpd.service
+```
+
+### NGINX
+
+To install **NGINX**, run:
+
+```bash
+sudo apt install nginx
+```
+
+A ready-to-use configuration is provided in `server_config/nginx.conf`. This configuration must be moved in
+`/etc/nginx/sites-enabled/default`
+
+The key modifications are:
+- Updated `root` to point to the `openFPGALoader_webUSB/html` directory
+- Added HTTPS support:
+  ```nginx
+  # SSL configuration
+  listen              443 ssl;
+  listen              [::]:443 ssl;
+  ssl_certificate     cert/nginx-selfsigned.crt;
+  ssl_certificate_key cert/nginx-selfsigned.key;
+  ssl_protocols       TLSv1.2 TLSv1.3;
+  ssl_ciphers         HIGH:!aNULL:!MD5;
+  ```
+- Added in `location` sub-node:
+  ```nginx
+  # libusb pthread support
+  add_header 'Cross-Origin-Opener-Policy' 'same-origin';
+  add_header 'Cross-Origin-Embedder-Policy' 'require-corp';
+  ```
+
+#### Generating a Self-Signed Certificate
+
+To enable HTTPS, create a certificate:
+
+```bash
+sudo mkdir /etc/nginx/certs
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/certs/nginx.key -out /etc/nginx/certs/nginx.crt
+sudo chmod 400 /etc/nginx/certs/nginx.key
+```
+
+#### Restart NGINX server
+```bash
+sudo systemctl restart nginx.service
 ```
 
 ## Acknowledgments.
