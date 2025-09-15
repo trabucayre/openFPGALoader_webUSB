@@ -13,7 +13,17 @@ browser, without installing packages via a package manager or manually building 
 **Note:** Since this implementation uses JavaScript and WebAssembly, load/write sequences are
 slower compared to the native binary version compiled for your computer.
 
-### Repository structure
+## Ready-to-Use Online openFPGALoader Webpage
+
+If you'd like to try it out before deploying your own instance, or simply using openFPGALoader
+directly from your browser, a ready-to-use webpage is available [here](https://ofl.trabucayre.com).
+
+The page is automatically refreshed every 30 minutes with the latest commits from both this
+repository and openFPGALoader.
+
+## Repository
+
+### Structure
 
 - `emsdk`: Emscripten SDK submodule
 - `zlib-src`: zlib submodule
@@ -173,10 +183,14 @@ sudo chmod 400 /etc/nginx/certs/nginx.key
 sudo systemctl restart nginx.service
 ```
 
-## Acknowledgments.
+## Acknowledgments
 
-This work has been supported by Enjoy-Digital, whose funding has significantly contributed to the development and enhancement of this project.
+This work has been sponsored by Enjoy-Digital, whose has significantly contributed to the development of this project.
 
 <p align="center">
   <img src="html/figs/enjoy_digital.png" width="200" />
 </p>
+
+## Contact
+
+E-mail: Gwenhael Goavec-Merou <gwenhael.goavec-merou@trabucayre.com>
