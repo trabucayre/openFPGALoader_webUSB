@@ -191,6 +191,9 @@ This work has been sponsored by Enjoy-Digital, whose has significantly contribut
   <img src="html/figs/enjoy_digital.png" width="200" />
 </p>
 
+`build.sh` and `api.js` are based on [openFPGALoader-web](https://github.com/YoWASP/openFPGALoader-web).
 ## Contact
 
-E-mail: Gwenhael Goavec-Merou <gwenhael.goavec-merou@trabucayre.com>
+E-mail: Gwenhael Goavec-Merou <gwenhael.goavec-merou@trabucayre.com></br>
+Copyright (C) <b>2025</b></br>
+SPDX-License-Identifier: Apache-2.0</br>
