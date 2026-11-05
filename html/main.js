@@ -1,6 +1,6 @@
 //import { runOpenFPGALoader     } from 'https://cdn.jsdelivr.net/npm/@yowasp/openfpgaloader/gen/bundle.js';
 import { runOpenFPGALoader     } from './bundle.js';
-import { lineBuffered, chunked } from 'https://cdn.jsdelivr.net/npm/@yowasp/runtime/lib/util.js';
+import { lineBuffered } from 'https://cdn.jsdelivr.net/npm/@yowasp/runtime/lib/util.js';
 
 // Supported boards storage
 const list_boards = {};
@@ -19,7 +19,8 @@ await fill_cables();
 await fill_boards();
 
 function update_ofl_log(div_log, message) {
-	div_log.innerHTML += message.replace(/ /g, "&nbsp") + "</br>\n";
+	div_log.append(document.createTextNode(message));
+	div_log.append(document.createElement("br"));
 	div_log.scrollTop = div_log.scrollHeight;
 }
 
@@ -42,7 +43,7 @@ async function ofl_exec(args, div_log, fileIn={}, with_usb=true, verbose=true) {
 	}
 
 	if (div_log)
-		div_log.innerHTML = "openFPGALoader " + args.join(' ') + "</br>\n";
+		div_log.textContent = "openFPGALoader " + args.join(' ') + "\n";
 
 	/* Get current time to compute duration */
 	const startTime = performance.now();
@@ -265,7 +266,7 @@ document.getElementById('programButtonManual').addEventListener('click', async f
 	// User bitstream file and name
 	const file    = document.getElementById("fileInput").files[0];
 	// openFPGALoader command line
-	const ofl_cmd = document.getElementById("ofl_cmd").value.split(' ');
+	const ofl_cmd = document.getElementById("ofl_cmd").value.trim().split(/\s+/).filter(Boolean);
 	perform_operation(file, ofl_cmd);
 });
 
@@ -286,7 +287,7 @@ document.getElementById('programButton').addEventListener('click', async functio
 	if (tgt_flash) {
 		ofl_cmd.push("-f");
 		if (verify)
-			cmd.push("--verify");
+			ofl_cmd.push("--verify");
 	}
 	perform_operation(file, ofl_cmd);
 });
@@ -339,11 +340,11 @@ async function detectSpiOverJtagName(cmd_line)
 		board_index = cmd_line.indexOf("--board");
 	if (board_index != -1) {
 		const board_name = cmd_line[board_index + 1];
-		const fpga_part  = list_boards[board_name]["fpga_part"];
+		const board_info = list_boards[board_name];
 		search_cmd.push("-b");
 		search_cmd.push(board_name);
-		if (fpga_part != "Undefined")
-			return [2, "spiOverJtag_" + fpga_part + ".bit.gz"];
+		if (board_info && board_info.fpga_part != "Undefined")
+			return [2, "spiOverJtag_" + board_info.fpga_part + ".bit.gz"];
 	}
 
 	// No --fpga_part option nor board or board without
