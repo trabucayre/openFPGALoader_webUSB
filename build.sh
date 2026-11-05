@@ -178,9 +178,6 @@ if [[ -e openFPGALoader-build ]]; then
 	node prepare.mjs
 	npm install
 	npm run build
-
-	mkdir -p dist/
-	npm pack --pack-destination=dist/
 	popd
 	cp npmjs/gen/bundle.js html/
 	cp npmjs/gen/openFPGALoader.wasm html/
