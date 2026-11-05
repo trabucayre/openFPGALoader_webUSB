@@ -7,3 +7,5 @@ npmjs/dist
 openFPGALoader
 html/bundle.js
 html/spiOverJtag
+npmjs/package.json
+npmjs/package-lock.json
