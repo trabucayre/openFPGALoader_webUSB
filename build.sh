@@ -160,7 +160,10 @@ if [[ $build_openfpgaloader == "true" ]]; then
 	emcmake cmake -S openFPGALoader -B openFPGALoader-build \
 	    -DCMAKE_CXX_FLAGS="-pthread -fexceptions" \
 	    -DCMAKE_EXE_LINKER_FLAGS="-lembind ${EMCC_FLAGS}" \
-	    -DCMAKE_EXECUTABLE_SUFFIX_CXX=".mjs"
+	    -DCMAKE_EXECUTABLE_SUFFIX_CXX=".mjs" \
+	    -DENABLE_REMOTEBITBANG=OFF \
+	    -DENABLE_XILINX_VIRTUAL_CABLE_CLIENT=OFF \
+	    -DENABLE_XILINX_VIRTUAL_CABLE_SERVER=OFF
 	emmake make -C openFPGALoader-build VERBOSE=1 -j$(nproc)
 fi
 
